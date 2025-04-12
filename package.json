@@ -1,0 +1,8 @@
+{
+  "name": "battleship",
+  "version": "1.0.0",
+  "workspaces": [
+    "client",
+    "server"
+  ]
+}
