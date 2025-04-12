@@ -29,59 +29,72 @@ Follow these steps to set up and run the Battleship project locally.
 
 ### 1. Clone the Repository
 
-````bash
+```bash
 git clone https://github.com/DeyvidTheWise/Battleship.git
 cd Battleship
+```
 
 ### 2. Install Dependencies
 
 ## Client (Frontend)
+
 ```bash
-   cd client
-   npm install
+cd client
+npm install
+```
 
 ## Server (Backend)
+
 ```bash
    cd server
    npm install
+```
 
 ### 3. Set Up MySQL Database
 
 ## Create a MySQL database named battleship:
-```sql
 
-   CREATE DATABASE battleship;
+```sql
+    CREATE DATABASE battleship;
+```
 
 (Optional) If you have a predefined SQL schema for tables (e.g., Users, Games), run it to set up the database. For now, the project uses an in-memory game state, but you can extend it to use MySQL for persistence.
 
 ### 4. Configure Environment Variables
+
 Create a server/.env file with your MySQL credentials:
+
 ```env
    DB_HOST=localhost
    DB_USER=root
    DB_PASSWORD=your_password
    DB_NAME=battleship
+```
 
 ### 5. Run the Server
+
 ```bash
    cd server
    npm start
+```
 
 The server will run on http://localhost:5000.
 
 ### 6. Run the Client
+
 In a separate terminal:
 
 ```bash
    cd client
    npm start
+```
 
 The client will run on http://localhost:3000.
 
 ### 7. Access the App
+
 Open your browser and go to http://localhost:3000. You can:
 
 Play against the AI by navigating to /game?mode=single.
 View the leaderboard at /leaderboard.
 Register or log in (placeholder functionality).
-````
