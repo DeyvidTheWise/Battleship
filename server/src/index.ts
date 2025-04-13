@@ -1,31 +1,56 @@
 import express from "express"
+import cors from "cors" // Add CORS import
 import { createServer } from "http"
 import { Server } from "socket.io"
-import { initializeSocket } from "./sockets/socketManager"
-import { db } from "./services/dbService"
-import apiRoutes from "./routes/api"
+import { socketHandler } from "./sockets/socketManager"
+import { register, login } from "./controllers/authController"
+import { getLeaderboard } from "./controllers/leaderboardController"
+import {
+  getProfile,
+  updateProfile,
+  getGameHistory,
+} from "./controllers/profileController"
+import {
+  sendFriendRequestHandler,
+  acceptFriendRequestHandler,
+  getFriendsHandler,
+  getFriendRequestsHandler,
+} from "./controllers/friendController"
+import { authMiddleware } from "./middlewares/authMiddleware"
 
 const app = express()
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000", // Allow client origin
+    origin: "http://localhost:3000",
     methods: ["GET", "POST"],
   },
 })
 
+app.use(cors({ origin: "http://localhost:3000" })) // Add CORS middleware
 app.use(express.json())
-app.use("/api", apiRoutes)
 
-// Initialize Socket.io
-initializeSocket(io)
+// Authentication Routes
+app.post("/api/register", ...register)
+app.post("/api/login", ...login)
 
-// Test database connection
-db.query("SELECT 1")
-  .then(() => console.log("Database connected"))
-  .catch((err) => console.error("Database connection failed:", err))
+// Leaderboard Route
+app.get("/api/leaderboard", getLeaderboard)
 
-const PORT = process.env.PORT || 5000
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+// Profile Routes
+app.get("/api/profile/:userId", getProfile)
+app.put("/api/profile/:userId", authMiddleware, updateProfile)
+app.get("/api/profile/:userId/history", getGameHistory)
+
+// Friend Routes
+app.post("/api/friends/request", authMiddleware, sendFriendRequestHandler)
+app.post("/api/friends/accept", authMiddleware, acceptFriendRequestHandler)
+app.get("/api/friends", authMiddleware, getFriendsHandler)
+app.get("/api/friends/requests", authMiddleware, getFriendRequestsHandler)
+
+// Socket.IO
+socketHandler(io)
+
+httpServer.listen(5000, () => {
+  console.log("Server running on port 5000")
 })

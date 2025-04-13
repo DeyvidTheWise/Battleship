@@ -1,60 +1,77 @@
+// server/src/services/gameService.ts
 import { v4 as uuidv4 } from "uuid"
-import { Game, Player, Ship } from "../types"
 import { io } from "../sockets/socketManager"
+import {
+  Game as GameType,
+  Player,
+  Ship as ShipType,
+  Coordinate,
+} from "@shared-types/game"
+import { updateUserXp } from "./userService"
+import { db } from "./dbService"
 
 const GRID_SIZE = 10
-const SHIPS = [
-  { name: "Carrier", size: 5 },
-  { name: "Battleship", size: 4 },
-  { name: "Cruiser", size: 3 },
-  { name: "Submarine", size: 3 },
-  { name: "Destroyer", size: 2 },
+
+const SHIPS: ShipType[] = [
+  {
+    name: "Carrier",
+    size: 5,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
+  {
+    name: "Battleship",
+    size: 4,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
+  {
+    name: "Cruiser",
+    size: 3,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
+  {
+    name: "Submarine",
+    size: 3,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
+  {
+    name: "Destroyer",
+    size: 2,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
 ]
 
-const games: Map<string, Game> = new Map()
-
-const placeAIShips = (player: Player) => {
-  SHIPS.forEach((shipSpec) => {
-    let placed = false
-    while (!placed) {
-      const isHorizontal = Math.random() > 0.5
-      const startX = Math.floor(Math.random() * GRID_SIZE)
-      const startY = Math.floor(Math.random() * GRID_SIZE)
-      const coordinates: { x: number; y: number }[] = []
-
-      let valid = true
-      for (let i = 0; i < shipSpec.size; i++) {
-        const x = isHorizontal ? startX + i : startX
-        const y = isHorizontal ? startY : startY + i
-        if (x >= GRID_SIZE || y >= GRID_SIZE || player.grid[y][x] !== "empty") {
-          valid = false
-          break
-        }
-        coordinates.push({ x, y })
-      }
-
-      if (valid) {
-        const ship: Ship = {
-          name: shipSpec.name,
-          size: shipSpec.size,
-          coordinates,
-          hits: 0,
-          isSunk: false,
-        }
-        player.ships.push(ship)
-        coordinates.forEach(({ x, y }) => {
-          player.grid[y][x] = "ship"
-        })
-        placed = true
-      }
-    }
-  })
-}
+const games = new Map<string, GameType>()
 
 export const createGame = (
   player1Id: string,
   isSinglePlayer: boolean
-): Game => {
+): GameType => {
+  console.log(
+    "Creating game for player:",
+    player1Id,
+    "isSinglePlayer:",
+    isSinglePlayer
+  )
   const player1: Player = {
     id: player1Id,
     ships: [],
@@ -63,12 +80,13 @@ export const createGame = (
       .map(() => Array(GRID_SIZE).fill("empty")),
   }
 
-  const game: Game = {
+  const game: GameType = {
     id: uuidv4(),
     player1,
     player2: null,
     currentTurn: player1Id,
     status: "setup",
+    winner: null,
   }
 
   if (isSinglePlayer) {
@@ -87,18 +105,21 @@ export const createGame = (
   return game
 }
 
-export const joinGame = (gameId: string, player2Id: string): Game => {
+export const joinGame = (gameId: string, player2Id: string): GameType => {
   const game = games.get(gameId)
-  if (!game || game.player2) throw new Error("Game not found or already full")
+  if (!game) throw new Error("Game not found")
+  if (game.player2) throw new Error("Game already has two players")
+  if (game.player1.id === player2Id)
+    throw new Error("You are already in this game")
 
-  game.player2 = {
+  const player2: Player = {
     id: player2Id,
     ships: [],
     grid: Array(GRID_SIZE)
       .fill(null)
       .map(() => Array(GRID_SIZE).fill("empty")),
   }
-
+  game.player2 = player2
   return game
 }
 
@@ -129,12 +150,14 @@ export const placeShip = (
     coordinates[i] = { x, y }
   }
 
-  const ship: Ship = {
+  const ship: ShipType = {
     name: shipName,
     size: shipSpec.size,
     coordinates,
     hits: 0,
     isSunk: false,
+    isHorizontal,
+    placed: true,
   }
   player.ships.push(ship)
   coordinates.forEach(({ x, y }) => {
@@ -147,6 +170,19 @@ export const placeShip = (
   ) {
     game.status = "playing"
   }
+}
+
+const saveGameHistory = async (
+  userId: string,
+  opponentId: string,
+  result: "win" | "loss" | "draw",
+  xpEarned: number
+) => {
+  const id = uuidv4()
+  await db.query(
+    "INSERT INTO game_history (id, user_id, opponent_id, result, xp_earned) VALUES (?, ?, ?, ?, ?)",
+    [id, userId, opponentId, result, xpEarned]
+  )
 }
 
 export const fireShot = (
@@ -179,8 +215,8 @@ export const fireShot = (
 
   let sunk = false
   if (hit) {
-    const ship = opponent.ships.find((s) =>
-      s.coordinates.some((coord) => coord.x === x && coord.y === y)
+    const ship = opponent.ships.find((s: ShipType) =>
+      s.coordinates.some((coord: Coordinate) => coord.x === x && coord.y === y)
     )
     if (ship) {
       ship.hits++
@@ -191,15 +227,23 @@ export const fireShot = (
     }
   }
 
-  const gameOver = opponent.ships.every((ship) => ship.isSunk)
+  const gameOver = opponent.ships.every((ship: ShipType) => ship.isSunk)
   if (!gameOver) {
     game.currentTurn = opponent.id
   } else {
     game.status = "finished"
+    game.winner = playerId
+    // Only save XP and history for logged-in users (not 'anonymous')
+    if (playerId !== "anonymous" && opponent.id !== "anonymous") {
+      updateUserXp(playerId, 100)
+      updateUserXp(opponent.id, 20)
+      saveGameHistory(playerId, opponent.id, "win", 100)
+      saveGameHistory(opponent.id, playerId, "loss", 20)
+    }
   }
 
   if (!gameOver && opponent.id === "AI") {
-    setTimeout(() => aiFireShot(gameId), 1000) // AI shoots after 1 second
+    setTimeout(() => aiFireShot(gameId), 1000)
   }
 
   return { hit, sunk, gameOver }
@@ -210,8 +254,8 @@ const aiFireShot = (gameId: string) => {
   if (!game || game.status !== "playing" || game.currentTurn !== "AI") return
 
   const player = game.player1
-  let x: number = 0 // Initialize with a default value
-  let y: number = 0 // Initialize with a default value
+  let x: number = 0
+  let y: number = 0
   let validShot = false
 
   while (!validShot) {
@@ -227,8 +271,8 @@ const aiFireShot = (gameId: string) => {
 
   let sunk = false
   if (hit) {
-    const ship = player.ships.find((s) =>
-      s.coordinates.some((coord) => coord.x === x && coord.y === y)
+    const ship = player.ships.find((s: ShipType) =>
+      s.coordinates.some((coord: Coordinate) => coord.x === x && coord.y === y)
     )
     if (ship) {
       ship.hits++
@@ -239,19 +283,62 @@ const aiFireShot = (gameId: string) => {
     }
   }
 
-  const gameOver = player.ships.every((ship) => ship.isSunk)
+  const gameOver = player.ships.every((ship: ShipType) => ship.isSunk)
   if (!gameOver) {
     game.currentTurn = player.id
   } else {
     game.status = "finished"
+    game.winner = "AI"
+    // Only save XP and history for logged-in users (not 'anonymous')
+    if (player.id !== "anonymous") {
+      updateUserXp(player.id, 20)
+      saveGameHistory(player.id, "AI", "loss", 20)
+      saveGameHistory("AI", player.id, "win", 0)
+    }
   }
 
   io.to(gameId).emit("shotResult", { shooter: "AI", x, y, hit, sunk, gameOver })
   io.to(gameId).emit("gameUpdated", game)
 }
 
-export const getGame = (gameId: string): Game => {
-  const game = games.get(gameId)
-  if (!game) throw new Error("Game not found")
-  return game
+const placeAIShips = (player: Player) => {
+  SHIPS.forEach((shipSpec) => {
+    let placed = false
+    while (!placed) {
+      const isHorizontal = Math.random() > 0.5
+      const startX = Math.floor(Math.random() * GRID_SIZE)
+      const startY = Math.floor(Math.random() * GRID_SIZE)
+      const coordinates: Coordinate[] = []
+
+      let valid = true
+      for (let i = 0; i < shipSpec.size; i++) {
+        const x = isHorizontal ? startX + i : startX
+        const y = isHorizontal ? startY : startY + i
+        if (x >= GRID_SIZE || y >= GRID_SIZE || player.grid[y][x] !== "empty") {
+          valid = false
+          break
+        }
+        coordinates.push({ x, y })
+      }
+
+      if (valid) {
+        const ship: ShipType = {
+          name: shipSpec.name,
+          size: shipSpec.size,
+          coordinates,
+          hits: 0,
+          isSunk: false,
+          isHorizontal,
+          placed: true,
+        }
+        player.ships.push(ship)
+        coordinates.forEach(({ x, y }) => {
+          player.grid[y][x] = "ship"
+        })
+        placed = true
+      }
+    }
+  })
 }
+
+export { games }

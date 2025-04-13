@@ -1,55 +1,129 @@
+// client/src/components/pages/GamePage.tsx
 import React, { useEffect, useState } from "react"
 import { useSocket } from "../../hooks/useSocket"
-import { GameBoard } from "../organisms/GameBoard"
+import GameBoard from "../organisms/GameBoard"
+import { Chat } from "../molecules/Chat"
 import { Text } from "../atoms/Text"
-import { Button } from "../atoms/Button"
+import Button from "../atoms/Button"
 import { useLocation, useNavigate } from "react-router-dom"
-import { Navbar } from "../organisms/Navbar"
+import PageLayout from "../organisms/PageLayout"
+import CenteredTitle from "../atoms/CenteredTitle"
+import GlassContainer from "../molecules/GlassContainer"
 import { Game as GameType, Ship as ShipType } from "@shared-types/game"
+import { useAuth } from "../../context/AuthContext"
 
-interface Ship {
-  name: string
-  size: number
-  isHorizontal: boolean
-  placed: boolean
-}
-
-const SHIPS: Ship[] = [
-  { name: "Carrier", size: 5, isHorizontal: true, placed: false },
-  { name: "Battleship", size: 4, isHorizontal: true, placed: false },
-  { name: "Cruiser", size: 3, isHorizontal: true, placed: false },
-  { name: "Submarine", size: 3, isHorizontal: true, placed: false },
-  { name: "Destroyer", size: 2, isHorizontal: true, placed: false },
+const SHIPS: ShipType[] = [
+  {
+    name: "Carrier",
+    size: 5,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
+  {
+    name: "Battleship",
+    size: 4,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
+  {
+    name: "Cruiser",
+    size: 3,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
+  {
+    name: "Submarine",
+    size: 3,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
+  {
+    name: "Destroyer",
+    size: 2,
+    coordinates: [],
+    hits: 0,
+    isSunk: false,
+    isHorizontal: true,
+    placed: false,
+  },
 ]
 
 const GamePage: React.FC = () => {
   const { socket, game, shotResult, error, setShotResult, setGame } =
     useSocket()
+  const { user, token } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const [showRegister, setShowRegister] = useState(false)
-  const [showLogin, setShowLogin] = useState(false)
-  const [registerData, setRegisterData] = useState({
-    firstname: "",
-    lastname: "",
-    email: "",
-    password: "",
-  })
-  const [loginData, setLoginData] = useState({ email: "", password: "" })
-  const [authError, setAuthError] = useState<string | null>(null)
-  const isSinglePlayer =
-    new URLSearchParams(location.search).get("mode") === "single"
-  const [ships, setShips] = useState<Ship[]>(SHIPS)
-  const [draggedShip, setDraggedShip] = useState<Ship | null>(null)
+  const searchParams = new URLSearchParams(location.search)
+  const isSinglePlayer = searchParams.get("mode") === "single"
+  const isMultiplayer = searchParams.get("mode") === "multiplayer"
+  const isSpectator = searchParams.get("mode") === "spectator"
+  const gameId = searchParams.get("gameId")
+  const [ships, setShips] = useState<ShipType[]>(SHIPS)
+  const [draggedShip, setDraggedShip] = useState<ShipType | null>(null)
   const [allShipsPlaced, setAllShipsPlaced] = useState(false)
-  const [timer, setTimer] = useState<number>(30) // 30-second timer
+  const [timer, setTimer] = useState<number>(30)
   const [timerActive, setTimerActive] = useState<boolean>(false)
 
+  console.log("GamePage user state:", user, "token:", token)
+
+  // Reset game state when navigating to a new game
+  useEffect(() => {
+    setGame(null)
+    setShotResult(null)
+    setShips(SHIPS)
+    setDraggedShip(null)
+    setAllShipsPlaced(false)
+    setTimer(30)
+    setTimerActive(false)
+  }, [location, setGame, setShotResult])
+
+  // Handle socket events and game initialization
   useEffect(() => {
     if (socket) {
-      socket.emit("createGame", isSinglePlayer)
+      const playerId = user ? user.id : "anonymous"
+      console.log("Socket connected, emitting createGame:", {
+        playerId,
+        isSinglePlayer,
+        isMultiplayer,
+        isSpectator,
+        gameId,
+      })
+      if (isSpectator && gameId) {
+        socket.emit("spectateGame", gameId)
+      } else if (isMultiplayer && gameId) {
+        if (!user) {
+          navigate("/lobby")
+          return
+        }
+        socket.emit("joinGame", gameId, user.id)
+      } else if (isSinglePlayer) {
+        socket.emit("createGame", true, playerId)
+      }
+    } else {
+      console.error("Socket not connected")
     }
-  }, [socket, isSinglePlayer])
+  }, [
+    socket,
+    user,
+    isSinglePlayer,
+    isMultiplayer,
+    isSpectator,
+    gameId,
+    navigate,
+  ])
 
   useEffect(() => {
     if (game && game.status === "playing") {
@@ -61,9 +135,14 @@ const GamePage: React.FC = () => {
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
 
-    if (game && game.status === "playing" && game.currentTurn === socket?.id) {
+    if (
+      game &&
+      game.status === "playing" &&
+      game.currentTurn === (user?.id || "anonymous") &&
+      !isSpectator
+    ) {
       setTimerActive(true)
-      setTimer(30) // Reset timer to 30 seconds
+      setTimer(30)
 
       interval = setInterval(() => {
         setTimer((prev) => {
@@ -83,18 +162,29 @@ const GamePage: React.FC = () => {
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [game, socket]) // Depend on game and socket only
+  }, [game, user])
 
   // Auto-clear shotResult after 3 seconds
   useEffect(() => {
     if (shotResult) {
       const timeout = setTimeout(() => {
         setShotResult(null)
-      }, 3000) // Clear after 3 seconds
+      }, 3000)
 
       return () => clearTimeout(timeout)
     }
   }, [shotResult, setShotResult])
+
+  // Handle game end: Update XP and history for logged-in users
+  useEffect(() => {
+    if (game && game.status === "finished" && user && socket) {
+      socket.emit("gameFinished", {
+        gameId: game.id,
+        winner: game.winner,
+        userId: user.id,
+      })
+    }
+  }, [game, user, socket])
 
   const handleAutoFireShot = () => {
     if (!game || !opponent) return
@@ -102,7 +192,6 @@ const GamePage: React.FC = () => {
     const opponentGrid = opponent.grid
     const untargetedCells: { x: number; y: number }[] = []
 
-    // Find all untargeted cells
     for (let y = 0; y < opponentGrid.length; y++) {
       for (let x = 0; x < opponentGrid[y].length; x++) {
         if (opponentGrid[y][x] !== "hit" && opponentGrid[y][x] !== "miss") {
@@ -123,7 +212,7 @@ const GamePage: React.FC = () => {
     coordinates: { x: number; y: number }[],
     isHorizontal: boolean
   ) => {
-    if (socket && game) {
+    if (socket && game && !isSpectator) {
       socket.emit("placeShip", {
         gameId: game.id,
         shipName,
@@ -142,57 +231,41 @@ const GamePage: React.FC = () => {
   }
 
   const handleFireShot = (x: number, y: number) => {
-    if (socket && game) {
+    if (socket && game && !isSpectator) {
+      console.log("Firing shot:", {
+        gameId: game.id,
+        x,
+        y,
+        playerId: user?.id || "anonymous",
+      })
       socket.emit("fireShot", { gameId: game.id, x, y })
-      setTimerActive(false) // Stop the timer when the player makes a move
-    }
-  }
-
-  const handleRegister = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(registerData),
+      setTimerActive(false)
+    } else {
+      console.error("Cannot fire shot:", {
+        socket: !!socket,
+        game: !!game,
+        isSpectator,
       })
-      if (!response.ok) throw new Error("Registration failed")
-      setShowRegister(false)
-      navigate("/game")
-    } catch (err) {
-      setAuthError((err as Error).message)
     }
   }
 
-  const handleLogin = async () => {
-    try {
-      const response = await fetch("http://localhost:5000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginData),
-      })
-      if (!response.ok) throw new Error("Login failed")
-      setShowLogin(false)
-      navigate("/game")
-    } catch (err) {
-      setAuthError((err as Error).message)
-    }
-  }
-
-  const handleDragStart = (ship: Ship, e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragStart = (
+    ship: ShipType,
+    e: React.DragEvent<HTMLDivElement>
+  ) => {
     setDraggedShip(ship)
 
-    // Create a custom drag image
     const dragImage = document.createElement("div")
     dragImage.style.display = ship.isHorizontal ? "flex" : "block"
     dragImage.style.gap = "2px"
 
-    const cellSize = 50 // Match the grid cell size
+    const cellSize = 50
     const cellCount = ship.size
     for (let i = 0; i < cellCount; i++) {
       const cell = document.createElement("div")
       cell.style.width = `${cellSize}px`
       cell.style.height = `${cellSize}px`
-      cell.style.background = "rgba(0, 247, 255, 0.5)" // Cyan with opacity
+      cell.style.background = "rgba(0, 247, 255, 0.5)"
       cell.style.border = "1px solid #555"
       if (ship.isHorizontal) {
         cell.style.display = "inline-block"
@@ -205,7 +278,6 @@ const GamePage: React.FC = () => {
     document.body.appendChild(dragImage)
     e.dataTransfer.setDragImage(dragImage, 0, 0)
 
-    // Clean up the drag image after the drag ends
     setTimeout(() => {
       document.body.removeChild(dragImage)
     }, 0)
@@ -222,13 +294,11 @@ const GamePage: React.FC = () => {
     let adjustedX = x
     let adjustedY = y
 
-    // Adjust coordinates if the ship would be out of bounds
     for (let i = 0; i < draggedShip.size; i++) {
       const coordX = draggedShip.isHorizontal ? adjustedX + i : adjustedX
       const coordY = draggedShip.isHorizontal ? adjustedY : adjustedY + i
 
       if (coordX >= 10 || coordY >= 10) {
-        // Adjust position to fit within the grid
         if (draggedShip.isHorizontal) {
           adjustedX = Math.max(0, 10 - draggedShip.size)
         } else {
@@ -238,7 +308,6 @@ const GamePage: React.FC = () => {
       }
     }
 
-    // Generate adjusted coordinates
     for (let i = 0; i < draggedShip.size; i++) {
       const coordX = draggedShip.isHorizontal ? adjustedX + i : adjustedX
       const coordY = draggedShip.isHorizontal ? adjustedY : adjustedY + i
@@ -264,288 +333,221 @@ const GamePage: React.FC = () => {
       <Text style={{ textAlign: "center", marginTop: "5rem" }}>Loading...</Text>
     )
 
-  const player = game.player1.id === socket?.id ? game.player1 : game.player2
-  const opponent = game.player1.id === socket?.id ? game.player2 : game.player1
+  const player =
+    game.player1.id === (user?.id || "anonymous") ? game.player1 : game.player2
+  const opponent =
+    game.player1.id === (user?.id || "anonymous") ? game.player2 : game.player1
 
   return (
-    <div style={{ minHeight: "100vh", paddingTop: "5.5rem" }}>
-      <Navbar
-        onRegisterClick={() => setShowRegister(true)}
-        onLoginClick={() => setShowLogin(true)}
-      />
-      <div
-        style={{ maxWidth: "1400px", margin: "0 auto", padding: "0 1.5rem" }}
-      >
+    <PageLayout>
+      <CenteredTitle>Battleship</CenteredTitle>
+      {error && (
         <Text
-          variant="h1"
-          style={{ textAlign: "center", marginBottom: "1.5rem", color: "#fff" }}
+          style={{
+            textAlign: "center",
+            marginBottom: "1rem",
+            color: "#ff4444",
+          }}
         >
-          Battleship
+          {error}
         </Text>
-        {error && (
-          <Text
-            style={{
-              textAlign: "center",
-              marginBottom: "1rem",
-              color: "#ff4444",
-            }}
-          >
-            {error}
-          </Text>
-        )}
+      )}
 
-        {game.status === "setup" && !allShipsPlaced && (
-          <>
-            <Text style={{ textAlign: "center", marginBottom: "1rem" }}>
-              You have one unit of each marine vessel: Carrier (5), Battleship
-              (4), Cruiser (3), Submarine (3), Destroyer (2). Drag and drop to
-              place them on the grid.
-            </Text>
-            <div className="game-setup-container">
-              <div>
-                <Text
-                  variant="h2"
-                  style={{ textAlign: "center", marginBottom: "1rem" }}
-                >
-                  Set Up Your Ships (vs AI)
-                </Text>
-                <GameBoard
-                  grid={player?.grid || []}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
-                />
-              </div>
-              <div
-                className="glass-container"
-                style={{
-                  maxWidth: "300px",
-                  minHeight: "500px", // Match the approximate height of the grid
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center", // Center content vertically
-                }}
+      {game.status === "setup" && !allShipsPlaced && !isSpectator && (
+        <>
+          <Text style={{ textAlign: "center", marginBottom: "1rem" }}>
+            You have one unit of each marine vessel: Carrier (5), Battleship
+            (4), Cruiser (3), Submarine (3), Destroyer (2). Drag and drop to
+            place them on the grid.
+          </Text>
+          <div className="game-setup-container">
+            <div>
+              <Text
+                variant="h2"
+                style={{ textAlign: "center", marginBottom: "1rem" }}
               >
-                <Text variant="h2" style={{ marginBottom: "1rem" }}>
-                  Place Your Ships
-                </Text>
-                {ships.map((ship) => (
+                Set Up Your Ships {isSinglePlayer ? "(vs AI)" : "(vs Player)"}
+              </Text>
+              <GameBoard
+                grid={player?.grid || []}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              />
+            </div>
+            <GlassContainer
+              style={{
+                maxWidth: "300px",
+                minHeight: "500px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+              }}
+            >
+              <Text variant="h2" style={{ marginBottom: "1rem" }}>
+                Place Your Ships
+              </Text>
+              {ships.map((ship) => (
+                <div
+                  key={ship.name}
+                  draggable={!ship.placed}
+                  onDragStart={(e) => handleDragStart(ship, e)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    marginBottom: "0.5rem",
+                    opacity: ship.placed ? 0.5 : 1,
+                    cursor: ship.placed ? "not-allowed" : "grab",
+                  }}
+                >
                   <div
-                    key={ship.name}
-                    draggable={!ship.placed}
-                    onDragStart={(e) => handleDragStart(ship, e)}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      marginBottom: "0.5rem",
-                      opacity: ship.placed ? 0.5 : 1,
-                      cursor: ship.placed ? "not-allowed" : "grab",
+                      background: "linear-gradient(to right, #00f7ff, #ff00ff)",
+                      padding: "0.5rem 1rem",
+                      borderRadius: "5px",
+                      flex: 1,
+                      textAlign: "center",
+                      fontWeight: "bold",
+                      color: "#fff",
                     }}
                   >
-                    <div
-                      style={{
-                        background:
-                          "linear-gradient(to right, #00f7ff, #ff00ff)",
-                        padding: "0.5rem 1rem",
-                        borderRadius: "5px",
-                        flex: 1,
-                        textAlign: "center",
-                        fontWeight: "bold",
-                        color: "#fff",
-                      }}
-                    >
-                      {ship.name} ({ship.size})
-                    </div>
-                    <Button
-                      onClick={() => toggleOrientation(ship.name)}
-                      variant="secondary"
-                      disabled={ship.placed}
-                    >
-                      {ship.isHorizontal ? "Horizontal" : "Vertical"}
-                    </Button>
+                    {ship.name} ({ship.size})
                   </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-
-        {(game.status === "playing" || allShipsPlaced) && (
-          <>
-            <div className="game-play-container">
-              <div>
-                <GameBoard grid={player?.grid || []} />
-              </div>
-              <div>
-                {opponent && (
-                  <GameBoard
-                    grid={opponent.grid}
-                    isOpponent
-                    onCellClick={
-                      game.currentTurn === socket?.id
-                        ? handleFireShot
-                        : undefined
-                    }
-                  />
-                )}
-                <Text style={{ marginTop: "1rem", textAlign: "center" }}>
-                  {game.currentTurn === socket?.id
-                    ? "Your Turn"
-                    : "Opponent's Turn"}
-                  {game.currentTurn === socket?.id &&
-                    timerActive &&
-                    ` (Time left: ${timer}s)`}
-                </Text>
-              </div>
-            </div>
-            {shotResult && (
-              <div className="announcements-container">
-                <div className="glass-container">
-                  <Text>
-                    {shotResult.shooter === socket?.id
-                      ? "Your Shot"
-                      : "AI Shot"}{" "}
-                    at ({String.fromCharCode(65 + shotResult.x)},{" "}
-                    {shotResult.y + 1}): {shotResult.hit ? "Hit!" : "Miss!"}
-                    {shotResult.sunk && " Ship Sunk!"}
-                    {shotResult.gameOver && " Game Over!"}
-                  </Text>
                   <Button
-                    onClick={() => setShotResult(null)}
+                    onClick={() => toggleOrientation(ship.name)}
                     variant="secondary"
-                    style={{ marginTop: "0.5rem" }}
+                    disabled={ship.placed}
                   >
-                    Clear
+                    {ship.isHorizontal ? "Horizontal" : "Vertical"}
                   </Button>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {game.status === "finished" && (
-          <div style={{ textAlign: "center" }}>
-            <Text variant="h2" style={{ marginBottom: "1rem" }}>
-              Game Over! Winner:{" "}
-              {game.currentTurn === socket?.id ? "You" : "Opponent"}
-            </Text>
-            <Button onClick={() => navigate("/")} variant="primary">
-              Back to Home
-            </Button>
+              ))}
+            </GlassContainer>
           </div>
-        )}
-      </div>
-
-      {/* Register/Login Modals */}
-      {showRegister && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <Text variant="h2" style={{ marginBottom: "1rem" }}>
-              Register
-            </Text>
-            {authError && (
-              <Text style={{ color: "#ff4444", marginBottom: "0.5rem" }}>
-                {authError}
-              </Text>
-            )}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.75rem",
-              }}
-            >
-              <input
-                type="text"
-                placeholder="First Name"
-                value={registerData.firstname}
-                onChange={(e) =>
-                  setRegisterData({
-                    ...registerData,
-                    firstname: e.target.value,
-                  })
-                }
-              />
-              <input
-                type="text"
-                placeholder="Last Name"
-                value={registerData.lastname}
-                onChange={(e) =>
-                  setRegisterData({ ...registerData, lastname: e.target.value })
-                }
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={registerData.email}
-                onChange={(e) =>
-                  setRegisterData({ ...registerData, email: e.target.value })
-                }
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={registerData.password}
-                onChange={(e) =>
-                  setRegisterData({ ...registerData, password: e.target.value })
-                }
-              />
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <Button onClick={handleRegister}>Submit</Button>
-                <Button onClick={() => setShowRegister(false)} variant="danger">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        </>
       )}
 
-      {showLogin && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <Text variant="h2" style={{ marginBottom: "1rem" }}>
-              Login
-            </Text>
-            {authError && (
-              <Text style={{ color: "#ff4444", marginBottom: "0.5rem" }}>
-                {authError}
+      {(game.status === "playing" || allShipsPlaced) && (
+        <>
+          <div
+            className="game-play-container"
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "2rem",
+              marginBottom: "2rem",
+              flexWrap: "wrap", // Ensure responsiveness
+            }}
+          >
+            <div>
+              <Text
+                variant="h2"
+                style={{
+                  textAlign: "center",
+                  marginBottom: "1rem",
+                  color: "#fff",
+                }}
+              >
+                Your Board
               </Text>
-            )}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.75rem",
-              }}
-            >
-              <input
-                type="email"
-                placeholder="Email"
-                value={loginData.email}
-                onChange={(e) =>
-                  setLoginData({ ...loginData, email: e.target.value })
+              <GameBoard grid={game.player1.grid} />
+            </div>
+            <div>
+              <Text
+                variant="h2"
+                style={{
+                  textAlign: "center",
+                  marginBottom: "1rem",
+                  color: "#fff",
+                }}
+              >
+                Opponent's Board
+              </Text>
+              <GameBoard
+                grid={
+                  game.player2?.grid ||
+                  Array(10)
+                    .fill(null)
+                    .map(() => Array(10).fill("empty"))
                 }
+                isOpponent
+                onCellClick={handleFireShot} // Pass the click handler
               />
-              <input
-                type="password"
-                placeholder="Password"
-                value={loginData.password}
-                onChange={(e) =>
-                  setLoginData({ ...loginData, password: e.target.value })
-                }
-              />
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <Button onClick={handleLogin}>Submit</Button>
-                <Button onClick={() => setShowLogin(false)} variant="danger">
-                  Cancel
-                </Button>
-              </div>
+              <Text
+                style={{
+                  marginTop: "1rem",
+                  textAlign: "center",
+                  color: "#fff",
+                }}
+              >
+                {isSpectator
+                  ? `Current Turn: ${
+                      game.currentTurn === game.player1.id
+                        ? "Player 1"
+                        : "Player 2"
+                    }`
+                  : game.currentTurn === (user?.id || "anonymous")
+                  ? "Your Turn"
+                  : "Opponent's Turn"}
+                {game.currentTurn === (user?.id || "anonymous") &&
+                  timerActive &&
+                  !isSpectator &&
+                  ` (Time left: ${timer}s)`}
+              </Text>
             </div>
           </div>
+          {shotResult && (
+            <div className="announcements-container">
+              <GlassContainer>
+                <Text>
+                  {isSpectator
+                    ? `Shot by ${
+                        shotResult.shooter === game.player1.id
+                          ? "Player 1"
+                          : "Player 2"
+                      }`
+                    : shotResult.shooter === (user?.id || "anonymous")
+                    ? "Your Shot"
+                    : "Opponent Shot"}{" "}
+                  at ({String.fromCharCode(65 + shotResult.x)},{" "}
+                  {shotResult.y + 1}): {shotResult.hit ? "Hit!" : "Miss!"}
+                  {shotResult.sunk && " Ship Sunk!"}
+                  {shotResult.gameOver && " Game Over!"}
+                </Text>
+                <Button
+                  onClick={() => setShotResult(null)}
+                  variant="secondary"
+                  style={{ marginTop: "0.5rem" }}
+                >
+                  Clear
+                </Button>
+              </GlassContainer>
+            </div>
+          )}
+          {(isMultiplayer || isSpectator) && gameId && <Chat gameId={gameId} />}
+        </>
+      )}
+
+      {game.status === "finished" && (
+        <div style={{ textAlign: "center" }}>
+          <Text variant="h2" style={{ marginBottom: "1rem" }}>
+            Game Over! Winner:{" "}
+            {isSpectator
+              ? game.winner === game.player1.id
+                ? "Player 1"
+                : "Player 2"
+              : game.winner === (user?.id || "anonymous")
+              ? "You"
+              : "Opponent"}
+          </Text>
+          <Button onClick={() => navigate("/lobby")} variant="primary">
+            Back to Lobby
+          </Button>
         </div>
       )}
-    </div>
+    </PageLayout>
   )
 }
 

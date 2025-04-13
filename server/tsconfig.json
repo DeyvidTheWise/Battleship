@@ -7,8 +7,13 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "@shared-types/*": ["./src/types/*"]
+    }
   },
-  "include": ["src/**/*", "../client/src/types/player.ts"],
-  "exclude": ["node_modules", "../client"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "../client/**/*"]
 }

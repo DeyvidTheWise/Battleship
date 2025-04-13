@@ -1,80 +1,109 @@
 import React from "react"
-import { GridRow } from "../molecules/GridRow"
-import { Text } from "../atoms/Text"
 
 interface GameBoardProps {
-  grid: string[][]
-  isOpponent?: boolean
-  onCellClick?: (x: number, y: number) => void
+  grid: string[][] // 'empty', 'ship', 'hit', 'miss'
   onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void
   onDrop?: (x: number, y: number) => void
+  onCellClick?: (x: number, y: number) => void
+  isOpponent?: boolean
 }
 
-export const GameBoard: React.FC<GameBoardProps> = ({
+const GameBoard: React.FC<GameBoardProps> = ({
   grid,
-  isOpponent = false,
-  onCellClick,
   onDragOver,
   onDrop,
+  onCellClick,
+  isOpponent,
 }) => {
-  const labels = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+  const columns = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
 
-  const handleCellClick = (x: number, y: number) => {
-    if (onCellClick) onCellClick(x, y)
+  const cellStyle = (cell: string) => {
+    // For opponent's board, treat 'ship' cells as 'empty' to hide them
+    const displayCell = isOpponent && cell === "ship" ? "empty" : cell
+    return {
+      width: "40px",
+      height: "40px",
+      background:
+        displayCell === "hit"
+          ? "rgba(255, 0, 0, 0.7)"
+          : displayCell === "miss"
+          ? "rgba(0, 0, 255, 0.3)"
+          : displayCell === "ship"
+          ? "rgba(128, 128, 128, 0.8)"
+          : "rgba(0, 119, 190, 0.5)",
+      border: "1px solid #333",
+      cursor:
+        isOpponent && displayCell !== "hit" && displayCell !== "miss"
+          ? "pointer"
+          : "default",
+      transition: "background 0.3s",
+    }
   }
 
-  const handleCellDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    if (onDragOver) onDragOver(e)
+  const labelStyle = {
+    width: "40px",
+    height: "40px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#fff",
+    fontWeight: "bold",
+    background: "transparent",
   }
 
-  const handleCellDrop = (x: number, y: number) => {
-    if (onDrop) onDrop(x, y)
+  const handleClick = (x: number, y: number) => {
+    if (
+      isOpponent &&
+      onCellClick &&
+      grid[y][x] !== "hit" &&
+      grid[y][x] !== "miss"
+    ) {
+      onCellClick(x, y)
+    }
   }
 
   return (
-    <div style={{ marginBottom: "2rem" }}>
-      <Text variant="h2" style={{ marginBottom: "0.5rem" }}>
-        {isOpponent ? "Opponent's Board" : "Your Board"}
-      </Text>
-      <div style={{ display: "flex" }}>
-        <div
-          style={{
-            width: "40px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          {grid.map((_, index) => (
-            <Text
-              key={index}
-              style={{ height: "50px", display: "flex", alignItems: "center" }}
-            >
-              {index + 1}
-            </Text>
-          ))}
-        </div>
-        <div>
-          <div style={{ display: "flex", gap: "2px", marginBottom: "2px" }}>
-            {labels.map((label) => (
-              <Text key={label} style={{ width: "50px", textAlign: "center" }}>
-                {label}
-              </Text>
-            ))}
+    <div style={{ display: "inline-block", margin: "0 20px" }}>
+      {/* Column Labels */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "40px repeat(10, 40px)",
+          marginLeft: "40px",
+        }}
+      >
+        <div /> {/* Empty top-left corner */}
+        {columns.map((col, index) => (
+          <div key={index} style={labelStyle}>
+            {col}
           </div>
-          {grid.map((row, rowIndex) => (
-            <GridRow
-              key={rowIndex}
-              row={row}
-              rowIndex={rowIndex}
-              onCellClick={onCellClick ? handleCellClick : undefined}
-              onDragOver={onDragOver ? handleCellDragOver : undefined}
-              onDrop={onDrop ? handleCellDrop : undefined}
-              isOpponent={isOpponent}
-            />
-          ))}
-        </div>
+        ))}
+      </div>
+      {/* Grid with Row Labels */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "40px repeat(10, 40px)",
+        }}
+      >
+        {grid.map((row, y) => (
+          <React.Fragment key={y}>
+            {/* Row Label */}
+            <div style={labelStyle}>{y + 1}</div>
+            {row.map((cell, x) => (
+              <div
+                key={`${x}-${y}`}
+                onDragOver={onDragOver}
+                onDrop={() => onDrop && onDrop(x, y)}
+                onClick={() => handleClick(x, y)}
+                style={cellStyle(cell)}
+              />
+            ))}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   )
 }
+
+export default GameBoard

@@ -9,8 +9,8 @@ export interface Ship {
   coordinates: Coordinate[]
   hits: number
   isSunk: boolean
-  isHorizontal: boolean // Added
-  placed: boolean // Added
+  isHorizontal?: boolean // Added
+  placed?: boolean // Added
 }
 
 export interface Player {

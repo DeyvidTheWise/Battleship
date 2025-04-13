@@ -1,3 +1,4 @@
+/* client/src/styles.css */
 :root {
   --primary-bg: linear-gradient(to bottom, #1a2a6c, #b2fefa);
   --dark-blue: #1a2a6c;
@@ -7,6 +8,7 @@
   --glass-bg: rgba(255, 255, 255, 0.1);
   --glass-border: 1px solid rgba(255, 255, 255, 0.3);
   --shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  --highlight: #00d4ff; /* For hover effects */
 }
 
 /* Navbar */
@@ -18,7 +20,12 @@
   top: 0;
   z-index: 10;
   box-shadow: var(--shadow);
-  height: 4rem; /* Fixed height */
+  height: 4rem;
+  transition: background 0.3s ease;
+}
+
+.navbar:hover {
+  background: linear-gradient(to right, #1a2a6c, #3a507e);
 }
 
 .navbar .container {
@@ -28,13 +35,18 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 1rem;
-  height: 100%; /* Ensure container fills the navbar height */
+  height: 100%;
 }
 
 .navbar h1 {
   font-size: 1.8rem;
   font-weight: bold;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  transition: color 0.3s ease;
+}
+
+.navbar h1:hover {
+  color: var(--highlight);
 }
 
 .navbar .nav-links {
@@ -49,17 +61,17 @@
   gap: 0.5rem;
   font-size: 1.1rem;
   font-weight: bold;
-  transition: color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  transition: color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease,
+    transform 0.3s ease;
   padding: 0.5rem 1rem;
   border-radius: 5px;
 }
 
-/* Style for Register and Login buttons */
 .navbar .nav-links button {
-  background: linear-gradient(135deg, #00f7ff, #ff00ff); /* Diagonal gradient */
+  background: linear-gradient(135deg, #00f7ff, #ff00ff);
   border: none;
   color: #fff;
-  box-shadow: 0 0 12px rgba(0, 247, 255, 0.6), 0 0 12px rgba(255, 0, 255, 0.6); /* Enhanced glow */
+  box-shadow: 0 0 12px rgba(0, 247, 255, 0.6), 0 0 12px rgba(255, 0, 255, 0.6);
   position: relative;
   overflow: hidden;
 }
@@ -85,25 +97,20 @@
 }
 
 .navbar .nav-links button:hover {
-  background: linear-gradient(
-    135deg,
-    #ff00ff,
-    #00f7ff
-  ); /* Reverse gradient on hover */
+  background: linear-gradient(135deg, #ff00ff, #00f7ff);
   box-shadow: 0 0 18px rgba(0, 247, 255, 0.8), 0 0 18px rgba(255, 0, 255, 0.8);
   transform: scale(1.05);
 }
 
-/* Style for other links (Home, Play vs AI, Leaderboard) */
 .navbar .nav-links a {
   color: #fff;
 }
 
 .navbar .nav-links a:hover {
-  color: var(--cyan);
+  color: var(--highlight);
+  transform: scale(1.05);
 }
 
-/* Burger Menu */
 .navbar .burger {
   display: none;
   font-size: 1.5rem;
@@ -137,6 +144,11 @@
     width: 100%;
     justify-content: center;
     margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .navbar h1 {
+    font-size: 1.4rem;
   }
 }
 
@@ -160,6 +172,7 @@
 .button.primary:hover {
   background: linear-gradient(to right, var(--magenta), var(--cyan));
   transform: scale(1.05);
+  box-shadow: 0 0 10px var(--highlight);
 }
 
 .button.secondary {
@@ -192,12 +205,22 @@
   font-size: 3rem;
   font-weight: bold;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  transition: color 0.3s ease;
+}
+
+.text-h1:hover {
+  color: var(--highlight);
 }
 
 .text-h2 {
   font-size: 2rem;
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  transition: color 0.3s ease;
+}
+
+.text-h2:hover {
+  color: var(--highlight);
 }
 
 .text-p {
@@ -215,16 +238,17 @@
   justify-content: center;
   font-size: 1.5rem;
   font-weight: bold;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, transform 0.3s ease;
 }
 
 .grid-cell.empty {
-  background: #4682b4; /* Ocean blue */
+  background: #4682b4;
 }
 
 .grid-cell.empty:hover {
   background: #5a9bd4;
   cursor: pointer;
+  transform: scale(1.05);
 }
 
 .grid-cell.ship {
@@ -234,11 +258,13 @@
 .grid-cell.hit {
   background: #ff4444;
   color: #fff;
+  transform: scale(1.1);
 }
 
 .grid-cell.miss {
   background: #ccc;
   color: #333;
+  transform: scale(1.1);
 }
 
 /* Glass Container */
@@ -249,6 +275,12 @@
   border-radius: 10px;
   padding: 1.5rem;
   box-shadow: var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-container:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* Modal */
@@ -274,13 +306,22 @@
   max-width: 500px;
   width: 90%;
   box-shadow: var(--shadow);
+  transform: translateY(-20px);
+  animation: slideIn 0.3s ease forwards;
+}
+
+@keyframes slideIn {
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* Inputs */
 input[type="text"],
 input[type="email"],
 input[type="password"],
-input[type="number"] {
+input[type="number"],
+textarea {
   width: 100%;
   padding: 0.75rem;
   border: 1px solid #555;
@@ -288,6 +329,17 @@ input[type="number"] {
   background: rgba(255, 255, 255, 0.1);
   color: var(--white);
   font-size: 1rem;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  border-color: var(--highlight);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.5);
+  outline: none;
 }
 
 input[type="text"]::placeholder,
@@ -311,6 +363,7 @@ input[type="number"]::placeholder {
   padding: 1rem;
   border: 1px solid #555;
   text-align: center;
+  transition: background 0.3s ease;
 }
 
 .table th {
@@ -321,6 +374,10 @@ input[type="number"]::placeholder {
 
 .table tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.05);
+}
+
+.table tr:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Game Setup and Play Containers */
@@ -369,19 +426,60 @@ input[type="number"]::placeholder {
   .glass-container {
     max-width: 100%;
     padding: 1rem;
+    min-height: auto;
   }
 
   .grid-cell {
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
   }
 
   .game-board-labels {
-    width: 40px !important; /* Adjust label width to match grid cells */
+    width: 30px !important;
   }
 
   .game-board-labels > * {
-    height: 40px !important; /* Adjust label height to match grid cells */
+    height: 30px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .button {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .text-h1 {
+    font-size: 1.5rem;
+  }
+
+  .text-h2 {
+    font-size: 1.2rem;
+  }
+
+  .text-p {
+    font-size: 0.9rem;
+  }
+
+  .grid-cell {
+    width: 25px;
+    height: 25px;
+    font-size: 0.8rem;
+  }
+
+  .game-board-labels {
+    width: 25px !important;
+  }
+
+  .game-board-labels > * {
+    height: 25px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
   }
 }
