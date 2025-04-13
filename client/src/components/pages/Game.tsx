@@ -42,6 +42,8 @@ const GamePage: React.FC = () => {
   const [ships, setShips] = useState<Ship[]>(SHIPS)
   const [draggedShip, setDraggedShip] = useState<Ship | null>(null)
   const [allShipsPlaced, setAllShipsPlaced] = useState(false)
+  const [timer, setTimer] = useState<number>(30) // 30-second timer
+  const [timerActive, setTimerActive] = useState<boolean>(false)
 
   useEffect(() => {
     if (socket) {
@@ -54,6 +56,67 @@ const GamePage: React.FC = () => {
       setAllShipsPlaced(true)
     }
   }, [game])
+
+  // Timer logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
+    if (game && game.status === "playing" && game.currentTurn === socket?.id) {
+      setTimerActive(true)
+      setTimer(30) // Reset timer to 30 seconds
+
+      interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval!)
+            handleAutoFireShot()
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
+    } else {
+      setTimerActive(false)
+      setTimer(30)
+    }
+
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [game, socket]) // Depend on game and socket only
+
+  // Auto-clear shotResult after 3 seconds
+  useEffect(() => {
+    if (shotResult) {
+      const timeout = setTimeout(() => {
+        setShotResult(null)
+      }, 3000) // Clear after 3 seconds
+
+      return () => clearTimeout(timeout)
+    }
+  }, [shotResult, setShotResult])
+
+  const handleAutoFireShot = () => {
+    if (!game || !opponent) return
+
+    const opponentGrid = opponent.grid
+    const untargetedCells: { x: number; y: number }[] = []
+
+    // Find all untargeted cells
+    for (let y = 0; y < opponentGrid.length; y++) {
+      for (let x = 0; x < opponentGrid[y].length; x++) {
+        if (opponentGrid[y][x] !== "hit" && opponentGrid[y][x] !== "miss") {
+          untargetedCells.push({ x, y })
+        }
+      }
+    }
+
+    if (untargetedCells.length > 0) {
+      const randomCell =
+        untargetedCells[Math.floor(Math.random() * untargetedCells.length)]
+      handleFireShot(randomCell.x, randomCell.y)
+    }
+  }
 
   const handlePlaceShip = (
     shipName: string,
@@ -81,6 +144,7 @@ const GamePage: React.FC = () => {
   const handleFireShot = (x: number, y: number) => {
     if (socket && game) {
       socket.emit("fireShot", { gameId: game.id, x, y })
+      setTimerActive(false) // Stop the timer when the player makes a move
     }
   }
 
@@ -328,6 +392,9 @@ const GamePage: React.FC = () => {
                   {game.currentTurn === socket?.id
                     ? "Your Turn"
                     : "Opponent's Turn"}
+                  {game.currentTurn === socket?.id &&
+                    timerActive &&
+                    ` (Time left: ${timer}s)`}
                 </Text>
               </div>
             </div>
