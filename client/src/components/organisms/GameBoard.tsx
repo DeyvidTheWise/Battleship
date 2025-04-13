@@ -6,14 +6,30 @@ interface GameBoardProps {
   grid: string[][]
   isOpponent?: boolean
   onCellClick?: (x: number, y: number) => void
+  onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void
+  onDrop?: (x: number, y: number) => void
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
   grid,
   isOpponent = false,
   onCellClick,
+  onDragOver,
+  onDrop,
 }) => {
   const labels = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+
+  const handleCellClick = (x: number, y: number) => {
+    if (onCellClick) onCellClick(x, y)
+  }
+
+  const handleCellDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    if (onDragOver) onDragOver(e)
+  }
+
+  const handleCellDrop = (x: number, y: number) => {
+    if (onDrop) onDrop(x, y)
+  }
 
   return (
     <div style={{ marginBottom: "2rem" }}>
@@ -51,7 +67,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               key={rowIndex}
               row={row}
               rowIndex={rowIndex}
-              onCellClick={onCellClick}
+              onCellClick={onCellClick ? handleCellClick : undefined}
+              onDragOver={onDragOver ? handleCellDragOver : undefined}
+              onDrop={onDrop ? handleCellDrop : undefined}
               isOpponent={isOpponent}
             />
           ))}

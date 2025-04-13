@@ -6,11 +6,7 @@
 
 body {
   font-family: "Arial", sans-serif;
-  background: linear-gradient(
-    to bottom,
-    #1a2a6c,
-    #b2fefa
-  ); /* Ocean gradient background */
+  background: linear-gradient(to bottom, #1a2a6c, #b2fefa);
   color: #fff;
 }
 

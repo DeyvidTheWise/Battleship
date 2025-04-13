@@ -46,8 +46,8 @@ npm install
 ## Server (Backend)
 
 ```bash
-   cd server
-   npm install
+cd server
+npm install
 ```
 
 ### 3. Set Up MySQL Database
@@ -55,7 +55,7 @@ npm install
 ## Create a MySQL database named battleship:
 
 ```sql
-    CREATE DATABASE battleship;
+CREATE DATABASE battleship;
 ```
 
 (Optional) If you have a predefined SQL schema for tables (e.g., Users, Games), run it to set up the database. For now, the project uses an in-memory game state, but you can extend it to use MySQL for persistence.
@@ -65,17 +65,17 @@ npm install
 Create a server/.env file with your MySQL credentials:
 
 ```env
-   DB_HOST=localhost
-   DB_USER=root
-   DB_PASSWORD=your_password
-   DB_NAME=battleship
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=battleship
 ```
 
 ### 5. Run the Server
 
 ```bash
-   cd server
-   npm start
+cd server
+npm start
 ```
 
 The server will run on http://localhost:5000.
@@ -85,8 +85,8 @@ The server will run on http://localhost:5000.
 In a separate terminal:
 
 ```bash
-   cd client
-   npm start
+cd client
+npm start
 ```
 
 The client will run on http://localhost:3000.

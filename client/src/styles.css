@@ -9,20 +9,16 @@
   --shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-body {
-  background: var(--primary-bg);
-  color: var(--white);
-}
-
 /* Navbar */
 .navbar {
   background: linear-gradient(to right, #0f1c47, #2a406e);
-  padding: 1rem;
+  padding: 1rem 0;
   position: fixed;
   width: 100%;
   top: 0;
   z-index: 10;
   box-shadow: var(--shadow);
+  height: 4rem; /* Fixed height */
 }
 
 .navbar .container {
@@ -31,6 +27,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0 1rem;
+  height: 100%; /* Ensure container fills the navbar height */
 }
 
 .navbar h1 {
@@ -51,12 +49,95 @@ body {
   gap: 0.5rem;
   font-size: 1.1rem;
   font-weight: bold;
-  transition: color 0.3s ease;
+  transition: color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
 }
 
-.navbar .nav-links a:hover,
+/* Style for Register and Login buttons */
+.navbar .nav-links button {
+  background: linear-gradient(135deg, #00f7ff, #ff00ff); /* Diagonal gradient */
+  border: none;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(0, 247, 255, 0.6), 0 0 12px rgba(255, 0, 255, 0.6); /* Enhanced glow */
+  position: relative;
+  overflow: hidden;
+}
+
+.navbar .nav-links button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: 0.5s;
+}
+
+.navbar .nav-links button:hover::before {
+  left: 100%;
+}
+
 .navbar .nav-links button:hover {
+  background: linear-gradient(
+    135deg,
+    #ff00ff,
+    #00f7ff
+  ); /* Reverse gradient on hover */
+  box-shadow: 0 0 18px rgba(0, 247, 255, 0.8), 0 0 18px rgba(255, 0, 255, 0.8);
+  transform: scale(1.05);
+}
+
+/* Style for other links (Home, Play vs AI, Leaderboard) */
+.navbar .nav-links a {
+  color: #fff;
+}
+
+.navbar .nav-links a:hover {
   color: var(--cyan);
+}
+
+/* Burger Menu */
+.navbar .burger {
+  display: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .navbar .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(to right, #0f1c47, #2a406e);
+    padding: 1rem;
+    box-shadow: var(--shadow);
+  }
+
+  .navbar .nav-links.active {
+    display: flex;
+  }
+
+  .navbar .burger {
+    display: block;
+  }
+
+  .navbar .nav-links a,
+  .navbar .nav-links button {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
 }
 
 /* Buttons */
@@ -240,4 +321,67 @@ input[type="number"]::placeholder {
 
 .table tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.05);
+}
+
+/* Game Setup and Play Containers */
+.game-setup-container {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.game-play-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.announcements-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .game-setup-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .game-play-container {
+    grid-template-columns: 1fr;
+  }
+
+  .text-h1 {
+    font-size: 2rem;
+  }
+
+  .text-h2 {
+    font-size: 1.5rem;
+  }
+
+  .text-p {
+    font-size: 1rem;
+  }
+
+  .glass-container {
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  .grid-cell {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .game-board-labels {
+    width: 40px !important; /* Adjust label width to match grid cells */
+  }
+
+  .game-board-labels > * {
+    height: 40px !important; /* Adjust label height to match grid cells */
+  }
 }

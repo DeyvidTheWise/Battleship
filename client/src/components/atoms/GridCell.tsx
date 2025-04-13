@@ -1,20 +1,35 @@
+// client/src/components/atoms/GridCell.tsx
 import React from "react"
 
 interface GridCellProps {
   state: "empty" | "ship" | "hit" | "miss"
   onClick?: () => void
+  onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void
+  onDrop?: () => void
   isOpponent?: boolean
+  className?: string
+  style?: React.CSSProperties
 }
 
 export const GridCell: React.FC<GridCellProps> = ({
   state,
   onClick,
+  onDragOver,
+  onDrop,
   isOpponent = false,
+  className = "",
+  style,
 }) => {
   const cellClass = state === "ship" && isOpponent ? "empty" : state
 
   return (
-    <div className={`grid-cell ${cellClass}`} onClick={onClick}>
+    <div
+      className={`grid-cell ${cellClass} ${className}`}
+      onClick={onClick}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      style={style}
+    >
       {state === "hit" && "X"}
       {state === "miss" && "O"}
     </div>
