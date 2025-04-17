@@ -1,4 +1,3 @@
-// client/src/components/atoms/GridCell.tsx
 import React from "react"
 
 interface GridCellProps {
@@ -11,7 +10,7 @@ interface GridCellProps {
   style?: React.CSSProperties
 }
 
-export const GridCell: React.FC<GridCellProps> = ({
+const GridCell: React.FC<GridCellProps> = ({
   state,
   onClick,
   onDragOver,
@@ -35,3 +34,5 @@ export const GridCell: React.FC<GridCellProps> = ({
     </div>
   )
 }
+
+export default GridCell

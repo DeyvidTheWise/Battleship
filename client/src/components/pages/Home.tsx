@@ -1,10 +1,9 @@
 // client/src/components/pages/Home.tsx
 import React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { Element } from "react-scroll"
-import { Text } from "../atoms/Text"
-import Button from "../atoms/Button"
-import PageLayout from "../organisms/PageLayout"
+import { Text, Button } from "../atoms"
+import { PageLayout } from "../organisms"
 import { useAuth } from "../../context/AuthContext"
 
 const Home: React.FC = () => {

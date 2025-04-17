@@ -1,6 +1,5 @@
 import React, { useState } from "react"
-import Button from "../atoms/Button"
-import { Text } from "../atoms/Text"
+import { Text, Button } from "../atoms"
 
 interface ShipSelectorProps {
   ships: { name: string; size: number }[]
@@ -11,10 +10,7 @@ interface ShipSelectorProps {
   ) => void
 }
 
-export const ShipSelector: React.FC<ShipSelectorProps> = ({
-  ships,
-  onPlaceShip,
-}) => {
+const ShipSelector: React.FC<ShipSelectorProps> = ({ ships, onPlaceShip }) => {
   const [selectedShip, setSelectedShip] = useState<string | null>(null)
   const [isHorizontal, setIsHorizontal] = useState(true)
   const [startX, setStartX] = useState<number | null>(null)
@@ -99,3 +95,5 @@ export const ShipSelector: React.FC<ShipSelectorProps> = ({
     </div>
   )
 }
+
+export default ShipSelector

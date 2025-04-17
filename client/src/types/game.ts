@@ -1,3 +1,4 @@
+// client/src/@shared-types/game.ts
 export interface Coordinate {
   x: number
   y: number
@@ -9,21 +10,23 @@ export interface Ship {
   coordinates: Coordinate[]
   hits: number
   isSunk: boolean
-  isHorizontal: boolean // Added
-  placed: boolean // Added
+  isHorizontal: boolean
+  placed: boolean
 }
 
 export interface Player {
   id: string
   ships: Ship[]
-  grid: string[][] // 'empty', 'ship', 'hit', 'miss'
+  grid: string[][]
 }
 
 export interface Game {
   id: string
+  joinCode: string | null
   player1: Player
   player2: Player | null
   currentTurn: string
   status: "setup" | "playing" | "finished"
   winner: string | null
+  createdAt: number
 }

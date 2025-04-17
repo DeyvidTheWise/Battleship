@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react"
-import { Text } from "../atoms/Text"
-import PageLayout from "../organisms/PageLayout"
+import { Text, CenteredTitle } from "../atoms"
+import { PageLayout } from "../organisms"
 import { useAuth } from "../../context/AuthContext"
-import CenteredTitle from "../atoms/CenteredTitle"
 
 interface LeaderboardEntry {
   id: string

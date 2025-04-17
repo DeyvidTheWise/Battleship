@@ -1,10 +1,9 @@
 // client/src/components/pages/Profile.tsx
 import React, { useEffect, useState } from "react"
-import { Text } from "../atoms/Text"
-import Button from "../atoms/Button"
+import { Text, Button } from "../atoms"
+import { Chat } from "../molecules"
+import { PageLayout } from "../organisms"
 import { useNavigate, useParams } from "react-router-dom"
-import PageLayout from "../organisms/PageLayout"
-import { Chat } from "../molecules/Chat"
 import { useAuth } from "../../context/AuthContext"
 
 interface UserProfile {

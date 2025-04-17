@@ -1,6 +1,5 @@
 import React, { useState } from "react"
-import { Text } from "../atoms/Text"
-import Button from "../atoms/Button"
+import { Text, Button } from "../atoms"
 import { useAuth } from "../../context/AuthContext" // Import useAuth
 
 interface LoginModalProps {

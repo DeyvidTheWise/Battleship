@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Link as ScrollLink } from "react-scroll"
-import { Text } from "../atoms/Text"
+import { Text } from "../atoms"
 import { useAuth } from "../../context/AuthContext"
 import {
   FaHome,
@@ -36,7 +36,7 @@ interface NavbarProps {
   isHomePage?: boolean
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
+const Navbar: React.FC<NavbarProps> = ({
   onRegisterClick,
   onLoginClick,
   isHomePage = false,
@@ -137,3 +137,5 @@ export const Navbar: React.FC<NavbarProps> = ({
     </nav>
   )
 }
+
+export default Navbar

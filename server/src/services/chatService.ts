@@ -1,32 +1,34 @@
-import { db } from "./dbService"
-import { RowDataPacket } from "mysql2"
-import { v4 as uuidv4 } from "uuid"
-
-export const saveMessage = async (
-  senderId: string,
-  receiverId: string | null,
-  gameId: string | null,
+const messages: {
+  senderId: string
+  gameId: string
   message: string
+  timestamp: number
+}[] = []
+
+export const saveMessage = (
+  senderId: string,
+  gameId: string,
+  message: string,
+  timestamp: number = Date.now()
 ) => {
-  const id = uuidv4()
-  await db.query(
-    "INSERT INTO messages (id, sender_id, receiver_id, game_id, message) VALUES (?, ?, ?, ?, ?)",
-    [id, senderId, receiverId, gameId, message]
+  const newMessage = {
+    senderId,
+    gameId,
+    message,
+    timestamp,
+  }
+  messages.push(newMessage)
+  return newMessage
+}
+
+export const getDirectMessages = (senderId: string, receiverId: string) => {
+  return messages.filter(
+    (msg) =>
+      (msg.senderId === senderId && msg.gameId === receiverId) ||
+      (msg.senderId === receiverId && msg.gameId === senderId)
   )
 }
 
-export const getDirectMessages = async (userId: string, friendId: string) => {
-  const [rows] = await db.query<RowDataPacket[]>(
-    "SELECT m.*, u.firstname, u.lastname FROM messages m JOIN users u ON m.sender_id = u.id WHERE (m.sender_id = ? AND m.receiver_id = ? AND m.game_id IS NULL) OR (m.sender_id = ? AND m.receiver_id = ? AND m.game_id IS NULL) ORDER BY m.sent_at ASC",
-    [userId, friendId, friendId, userId]
-  )
-  return rows
-}
-
-export const getGameMessages = async (gameId: string) => {
-  const [rows] = await db.query<RowDataPacket[]>(
-    "SELECT m.*, u.firstname, u.lastname FROM messages m JOIN users u ON m.sender_id = u.id WHERE m.game_id = ? AND m.receiver_id IS NULL ORDER BY m.sent_at ASC",
-    [gameId]
-  )
-  return rows
+export const getGameMessages = (gameId: string) => {
+  return messages.filter((msg) => msg.gameId === gameId)
 }

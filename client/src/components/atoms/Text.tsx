@@ -7,7 +7,7 @@ interface TextProps {
   style?: React.CSSProperties
 }
 
-export const Text: React.FC<TextProps> = ({
+const Text: React.FC<TextProps> = ({
   variant = "p",
   children,
   className = "",
@@ -33,3 +33,5 @@ export const Text: React.FC<TextProps> = ({
     </p>
   )
 }
+
+export default Text

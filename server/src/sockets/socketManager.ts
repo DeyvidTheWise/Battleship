@@ -1,4 +1,3 @@
-// server/src/sockets/socketManager.ts
 import { Server, Socket } from "socket.io"
 import {
   createGame,
@@ -6,6 +5,8 @@ import {
   fireShot,
   joinGame,
   games,
+  findGameByJoinCode,
+  removePlayerFromGame,
 } from "../services/gameService"
 import {
   saveMessage,
@@ -14,10 +15,25 @@ import {
 } from "../services/chatService"
 import { getUserById } from "../services/userService"
 import jwt from "jsonwebtoken"
+import { Coordinate } from "@shared-types/game" // Added import
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret"
 
 export let io: Server
+
+const updateGameList = () => {
+  io.emit(
+    "gameListUpdate",
+    Array.from(games.values()).map((g) => ({
+      id: g.id,
+      joinCode: g.joinCode,
+      playerCount: (g.player1 ? 1 : 0) + (g.player2 ? 1 : 0),
+      playerNames: [g.player1?.id, g.player2?.id]
+        .filter((id): id is string => typeof id === "string" && id !== "AI")
+        .filter(Boolean),
+    }))
+  )
+}
 
 export const socketHandler = (server: Server) => {
   io = server
@@ -25,7 +41,7 @@ export const socketHandler = (server: Server) => {
     const token = socket.handshake.auth.token
 
     if (!token) {
-      // Allow anonymous users for single-player mode
+      console.log("No token provided, allowing anonymous user")
       socket.data.userId = "anonymous"
       return next()
     }
@@ -33,23 +49,35 @@ export const socketHandler = (server: Server) => {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as { id: string }
       socket.data.userId = decoded.id
+      console.log("Authenticated user:", socket.data.userId)
       next()
     } catch (error) {
-      return next(new Error("Authentication error: Invalid token"))
+      console.error("Authentication error:", error)
+      socket.data.userId = "anonymous"
+      next()
     }
   })
+
+  // Periodic game list update every 5 seconds
+  setInterval(() => {
+    updateGameList()
+  }, 5000)
 
   io.on("connection", (socket: Socket) => {
     console.log(`User connected: ${socket.data.userId}`)
 
     socket.on("createGame", (isSinglePlayer: boolean, userId: string) => {
-      console.log("createGame event received:", { isSinglePlayer, userId })
+      console.log("createGame event received:", {
+        isSinglePlayer,
+        userId,
+        socketUserId: socket.data.userId,
+      })
       try {
         const game = createGame(userId, isSinglePlayer)
         socket.join(game.id)
         console.log("Emitting gameCreated:", game)
         socket.emit("gameCreated", game)
-        io.emit("gameListUpdate", Array.from(games.keys()))
+        updateGameList()
       } catch (error) {
         console.error("Error creating game:", error)
         socket.emit("error", (error as Error).message)
@@ -57,17 +85,50 @@ export const socketHandler = (server: Server) => {
     })
 
     socket.on("joinGame", (gameId: string, userId: string) => {
+      console.log("joinGame event received:", {
+        gameId,
+        userId,
+        socketUserId: socket.data.userId,
+      })
       try {
         const game = joinGame(gameId, userId)
         socket.join(gameId)
+        console.log("Emitting gameUpdated:", game)
         io.to(gameId).emit("gameUpdated", game)
-        io.emit("gameListUpdate", Array.from(games.keys()))
+        updateGameList()
       } catch (error) {
+        console.error("Error joining game:", error)
+        socket.emit("error", (error as Error).message)
+      }
+    })
+
+    socket.on("joinGameByCode", (joinCode: string, userId: string) => {
+      console.log("joinGameByCode event received:", {
+        joinCode,
+        userId,
+        socketUserId: socket.data.userId,
+      })
+      try {
+        const game = findGameByJoinCode(joinCode)
+        if (!game) {
+          throw new Error("Game not found for this join code")
+        }
+        const updatedGame = joinGame(game.id, userId)
+        socket.join(game.id)
+        console.log("Emitting gameUpdated:", updatedGame)
+        io.to(game.id).emit("gameUpdated", updatedGame)
+        updateGameList()
+      } catch (error) {
+        console.error("Error joining game by code:", error)
         socket.emit("error", (error as Error).message)
       }
     })
 
     socket.on("spectateGame", (gameId: string) => {
+      console.log("spectateGame event received:", {
+        gameId,
+        userId: socket.data.userId,
+      })
       const game = games.get(gameId)
       if (!game) {
         socket.emit("error", "Game not found")
@@ -75,6 +136,11 @@ export const socketHandler = (server: Server) => {
       }
       socket.join(gameId)
       socket.emit("gameUpdated", game)
+    })
+
+    socket.on("getGameList", () => {
+      console.log("getGameList event received")
+      updateGameList()
     })
 
     socket.on(
@@ -87,9 +153,16 @@ export const socketHandler = (server: Server) => {
       }: {
         gameId: string
         shipName: string
-        coordinates: { x: number; y: number }[]
+        coordinates: Coordinate[]
         isHorizontal: boolean
       }) => {
+        console.log("placeShip event received:", {
+          gameId,
+          shipName,
+          coordinates,
+          isHorizontal,
+          userId: socket.data.userId,
+        })
         try {
           placeShip(
             gameId,
@@ -98,9 +171,8 @@ export const socketHandler = (server: Server) => {
             coordinates,
             isHorizontal
           )
-          const game = games.get(gameId)
-          io.to(gameId).emit("gameUpdated", game)
         } catch (error) {
+          console.error("Error placing ship:", error)
           socket.emit("error", (error as Error).message)
         }
       }
@@ -117,7 +189,6 @@ export const socketHandler = (server: Server) => {
         })
         try {
           const result = fireShot(gameId, socket.data.userId, x, y)
-          console.log("Shot result:", result)
           io.to(gameId).emit("shotResult", {
             ...result,
             shooter: socket.data.userId,
@@ -129,92 +200,86 @@ export const socketHandler = (server: Server) => {
         } catch (error) {
           console.error("Error firing shot:", error)
           socket.emit("error", (error as Error).message)
+          const game = removePlayerFromGame(gameId, socket.data.userId)
+          if (game) {
+            io.to(gameId).emit("gameUpdated", game)
+            updateGameList()
+          }
         }
       }
     )
 
-    socket.on(
-      "gameFinished",
-      ({
-        gameId,
-        winner,
-        userId,
-      }: {
-        gameId: string
-        winner: string
-        userId: string
-      }) => {
-        // This event is only emitted for logged-in users
-        // Results are already saved in gameService.ts for logged-in users
-        console.log(
-          `Game ${gameId} finished. Winner: ${winner}, User: ${userId}`
-        )
+    socket.on("timeout", (gameId: string, userId: string) => {
+      console.log("timeout event received:", { gameId, userId })
+      const game = games.get(gameId)
+      if (game && game.status === "playing" && game.currentTurn === userId) {
+        game.status = "finished"
+        game.winner =
+          game.player1?.id === userId
+            ? game.player2?.id ?? null
+            : game.player1?.id ?? null
+        io.to(gameId).emit("gameUpdated", game)
+        updateGameList()
       }
-    )
-
-    socket.on("getGameList", () => {
-      socket.emit("gameListUpdate", Array.from(games.keys()))
     })
 
     socket.on(
       "sendMessage",
-      async ({
-        gameId,
-        receiverId,
-        message,
-      }: {
-        gameId?: string
-        receiverId?: string
-        message: string
-      }) => {
-        try {
-          await saveMessage(
-            socket.data.userId,
-            receiverId || null,
-            gameId || null,
-            message
-          )
-          const sender = await getUserById(socket.data.userId)
-          const messageData = {
-            sender_id: socket.data.userId,
-            firstname: sender.firstname,
-            lastname: sender.lastname,
-            message,
-            sent_at: new Date().toISOString(),
-          }
-
-          if (gameId) {
-            io.to(gameId).emit("gameMessage", messageData)
-          } else if (receiverId) {
-            socket.to(receiverId).emit("directMessage", messageData)
-            socket.emit("directMessage", messageData)
-          }
-        } catch (error) {
-          socket.emit("error", (error as Error).message)
-        }
+      ({ gameId, content }: { gameId: string; content: string }) => {
+        console.log("sendMessage event received:", {
+          gameId,
+          content,
+          userId: socket.data.userId,
+        })
+        const message = saveMessage(
+          socket.data.userId,
+          gameId,
+          content,
+          Date.now()
+        )
+        io.to(gameId).emit("newMessage", message)
       }
     )
 
-    socket.on("getGameMessages", async (gameId: string) => {
-      try {
-        const messages = await getGameMessages(gameId)
-        socket.emit("gameMessages", messages)
-      } catch (error) {
-        socket.emit("error", (error as Error).message)
-      }
+    socket.on("getGameMessages", (gameId: string) => {
+      console.log("getGameMessages event received:", {
+        gameId,
+        userId: socket.data.userId,
+      })
+      const messages = getGameMessages(gameId)
+      socket.emit("gameMessages", messages)
     })
 
-    socket.on("getDirectMessages", async (friendId: string) => {
-      try {
-        const messages = await getDirectMessages(socket.data.userId, friendId)
-        socket.emit("directMessages", messages)
-      } catch (error) {
-        socket.emit("error", (error as Error).message)
-      }
+    socket.on("getDirectMessages", (receiverId: string) => {
+      console.log("getDirectMessages event received:", {
+        receiverId,
+        userId: socket.data.userId,
+      })
+      const messages = getDirectMessages(socket.data.userId, receiverId)
+      socket.emit("directMessages", messages)
+    })
+
+    socket.on("getUserInfo", (userId: string) => {
+      console.log("getUserInfo event received:", {
+        userId,
+        requesterId: socket.data.userId,
+      })
+      const userInfo = getUserById(userId)
+      socket.emit("userInfo", userInfo)
     })
 
     socket.on("disconnect", () => {
       console.log(`User disconnected: ${socket.data.userId}`)
+      const rooms = Array.from(socket.rooms).filter(
+        (room) => room !== socket.id
+      )
+      rooms.forEach((gameId) => {
+        const game = removePlayerFromGame(gameId, socket.data.userId)
+        if (game) {
+          io.to(gameId).emit("gameUpdated", game)
+          updateGameList()
+        }
+      })
     })
   })
 }

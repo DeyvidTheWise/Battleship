@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react"
-import { Text } from "../atoms/Text"
-import Button from "../atoms/Button"
+import { Text, Button } from "../atoms"
 import { useSocket } from "../../hooks/useSocket"
 import { useAuth } from "../../context/AuthContext"
 
@@ -17,7 +16,7 @@ interface ChatProps {
   friendId?: string // For direct messages
 }
 
-export const Chat: React.FC<ChatProps> = ({ gameId, friendId }) => {
+const Chat: React.FC<ChatProps> = ({ gameId, friendId }) => {
   const { socket } = useSocket()
   const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
@@ -110,3 +109,5 @@ export const Chat: React.FC<ChatProps> = ({ gameId, friendId }) => {
     </div>
   )
 }
+
+export default Chat

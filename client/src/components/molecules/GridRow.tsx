@@ -1,5 +1,5 @@
 import React from "react"
-import { GridCell } from "../atoms/GridCell"
+import { GridCell } from "../atoms"
 
 interface GridRowProps {
   row: string[]
@@ -10,7 +10,7 @@ interface GridRowProps {
   isOpponent?: boolean
 }
 
-export const GridRow: React.FC<GridRowProps> = ({
+const GridRow: React.FC<GridRowProps> = ({
   row,
   rowIndex,
   onCellClick,
@@ -45,3 +45,5 @@ export const GridRow: React.FC<GridRowProps> = ({
     </div>
   )
 }
+
+export default GridRow

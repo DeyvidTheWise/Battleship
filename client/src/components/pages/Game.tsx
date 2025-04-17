@@ -1,15 +1,14 @@
-// client/src/components/pages/GamePage.tsx
 import React, { useEffect, useState } from "react"
 import { useSocket } from "../../hooks/useSocket"
-import GameBoard from "../organisms/GameBoard"
-import { Chat } from "../molecules/Chat"
-import { Text } from "../atoms/Text"
-import Button from "../atoms/Button"
+import { GameBoard, PageLayout } from "../organisms"
+import { Chat, GlassContainer } from "../molecules"
+import { Text, Button, CenteredTitle } from "../atoms"
 import { useLocation, useNavigate } from "react-router-dom"
-import PageLayout from "../organisms/PageLayout"
-import CenteredTitle from "../atoms/CenteredTitle"
-import GlassContainer from "../molecules/GlassContainer"
-import { Game as GameType, Ship as ShipType } from "@shared-types/game"
+import {
+  Game as GameType,
+  Ship as ShipType,
+  Coordinate,
+} from "@shared-types/game"
 import { useAuth } from "../../context/AuthContext"
 
 const SHIPS: ShipType[] = [
@@ -61,8 +60,15 @@ const SHIPS: ShipType[] = [
 ]
 
 const GamePage: React.FC = () => {
-  const { socket, game, shotResult, error, setShotResult, setGame } =
-    useSocket()
+  const {
+    socket,
+    game,
+    shotResult,
+    error,
+    setShotResult,
+    setGame,
+    isConnected,
+  } = useSocket()
   const { user, token } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -71,11 +77,13 @@ const GamePage: React.FC = () => {
   const isMultiplayer = searchParams.get("mode") === "multiplayer"
   const isSpectator = searchParams.get("mode") === "spectator"
   const gameId = searchParams.get("gameId")
+  const joinCode = searchParams.get("joinCode")
   const [ships, setShips] = useState<ShipType[]>(SHIPS)
   const [draggedShip, setDraggedShip] = useState<ShipType | null>(null)
   const [allShipsPlaced, setAllShipsPlaced] = useState(false)
   const [timer, setTimer] = useState<number>(30)
   const [timerActive, setTimerActive] = useState<boolean>(false)
+  const [placementError, setPlacementError] = useState<string | null>(null)
 
   console.log("GamePage user state:", user, "token:", token)
 
@@ -88,11 +96,12 @@ const GamePage: React.FC = () => {
     setAllShipsPlaced(false)
     setTimer(30)
     setTimerActive(false)
+    setPlacementError(null)
   }, [location, setGame, setShotResult])
 
   // Handle socket events and game initialization
   useEffect(() => {
-    if (socket) {
+    if (socket && isConnected) {
       const playerId = user ? user.id : "anonymous"
       console.log("Socket connected, emitting createGame:", {
         playerId,
@@ -100,6 +109,7 @@ const GamePage: React.FC = () => {
         isMultiplayer,
         isSpectator,
         gameId,
+        joinCode,
       })
       if (isSpectator && gameId) {
         socket.emit("spectateGame", gameId)
@@ -109,203 +119,130 @@ const GamePage: React.FC = () => {
           return
         }
         socket.emit("joinGame", gameId, user.id)
+      } else if (isMultiplayer && joinCode) {
+        if (!user) {
+          navigate("/lobby")
+          return
+        }
+        socket.emit("joinGameByCode", joinCode, user.id)
       } else if (isSinglePlayer) {
         socket.emit("createGame", true, playerId)
+      } else if (isMultiplayer) {
+        // If no gameId or joinCode, create a new multiplayer game
+        socket.emit("createGame", false, playerId)
       }
     } else {
-      console.error("Socket not connected")
+      console.error("Socket not connected or not ready:", {
+        socket: !!socket,
+        isConnected,
+      })
     }
   }, [
     socket,
+    isConnected,
     user,
     isSinglePlayer,
     isMultiplayer,
     isSpectator,
     gameId,
+    joinCode,
     navigate,
   ])
 
+  // Listen for server errors
   useEffect(() => {
-    if (game && game.status === "playing") {
-      setAllShipsPlaced(true)
+    if (socket) {
+      const errorHandler = (err: string) => {
+        console.error("Server error:", err)
+        if (
+          err.includes("Invalid ship placement") ||
+          err.includes("Not your turn")
+        ) {
+          setPlacementError(
+            err.includes("Invalid ship placement")
+              ? "Cannot place ship here. Please try a different position."
+              : "Not your turn. Please wait for your opponent."
+          )
+        } else {
+          setPlacementError(err)
+        }
+      }
+
+      socket.on("error", errorHandler)
+
+      return () => {
+        socket.off("error", errorHandler)
+      }
     }
-  }, [game])
+  }, [socket])
+
+  // Log game state changes
+  useEffect(() => {
+    if (game) {
+      console.log("Game state updated:", game)
+      setPlacementError(null)
+      const player =
+        game.player1?.id === (user?.id || "anonymous")
+          ? game.player1
+          : game.player2
+      if (player) {
+        console.log(
+          "Client grid state after update:",
+          player.grid.map((row) => row.join(","))
+        )
+      }
+    } else {
+      console.log("Game state is null")
+    }
+  }, [game, user])
 
   // Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
-
-    if (
-      game &&
-      game.status === "playing" &&
-      game.currentTurn === (user?.id || "anonymous") &&
-      !isSpectator
-    ) {
-      setTimerActive(true)
-      setTimer(30)
-
+    if (timerActive && timer > 0) {
       interval = setInterval(() => {
-        setTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval!)
-            handleAutoFireShot()
+        setTimer((prevTimer) => {
+          if (prevTimer <= 1) {
+            setTimerActive(false)
+            if (game && socket && !isSpectator) {
+              socket.emit("timeout", game.id, user?.id || "anonymous")
+            }
             return 0
           }
-          return prev - 1
+          return prevTimer - 1
         })
       }, 1000)
-    } else {
-      setTimerActive(false)
-      setTimer(30)
     }
 
     return () => {
       if (interval) clearInterval(interval)
     }
-  }, [game, user])
-
-  // Auto-clear shotResult after 3 seconds
-  useEffect(() => {
-    if (shotResult) {
-      const timeout = setTimeout(() => {
-        setShotResult(null)
-      }, 3000)
-
-      return () => clearTimeout(timeout)
-    }
-  }, [shotResult, setShotResult])
-
-  // Handle game end: Update XP and history for logged-in users
-  useEffect(() => {
-    if (game && game.status === "finished" && user && socket) {
-      socket.emit("gameFinished", {
-        gameId: game.id,
-        winner: game.winner,
-        userId: user.id,
-      })
-    }
-  }, [game, user, socket])
-
-  const handleAutoFireShot = () => {
-    if (!game || !opponent) return
-
-    const opponentGrid = opponent.grid
-    const untargetedCells: { x: number; y: number }[] = []
-
-    for (let y = 0; y < opponentGrid.length; y++) {
-      for (let x = 0; x < opponentGrid[y].length; x++) {
-        if (opponentGrid[y][x] !== "hit" && opponentGrid[y][x] !== "miss") {
-          untargetedCells.push({ x, y })
-        }
-      }
-    }
-
-    if (untargetedCells.length > 0) {
-      const randomCell =
-        untargetedCells[Math.floor(Math.random() * untargetedCells.length)]
-      handleFireShot(randomCell.x, randomCell.y)
-    }
-  }
-
-  const handlePlaceShip = (
-    shipName: string,
-    coordinates: { x: number; y: number }[],
-    isHorizontal: boolean
-  ) => {
-    if (socket && game && !isSpectator) {
-      socket.emit("placeShip", {
-        gameId: game.id,
-        shipName,
-        coordinates,
-        isHorizontal,
-      })
-      setShips((prevShips) =>
-        prevShips.map((ship) =>
-          ship.name === shipName ? { ...ship, placed: true } : ship
-        )
-      )
-      if (ships.every((ship) => ship.name === shipName || ship.placed)) {
-        setAllShipsPlaced(true)
-      }
-    }
-  }
-
-  const handleFireShot = (x: number, y: number) => {
-    if (socket && game && !isSpectator) {
-      console.log("Firing shot:", {
-        gameId: game.id,
-        x,
-        y,
-        playerId: user?.id || "anonymous",
-      })
-      socket.emit("fireShot", { gameId: game.id, x, y })
-      setTimerActive(false)
-    } else {
-      console.error("Cannot fire shot:", {
-        socket: !!socket,
-        game: !!game,
-        isSpectator,
-      })
-    }
-  }
+  }, [timerActive, timer, game, socket, user])
 
   const handleDragStart = (
     ship: ShipType,
-    e: React.DragEvent<HTMLDivElement>
+    event: React.DragEvent<HTMLDivElement>
   ) => {
     setDraggedShip(ship)
-
-    const dragImage = document.createElement("div")
-    dragImage.style.display = ship.isHorizontal ? "flex" : "block"
-    dragImage.style.gap = "2px"
-
-    const cellSize = 50
-    const cellCount = ship.size
-    for (let i = 0; i < cellCount; i++) {
-      const cell = document.createElement("div")
-      cell.style.width = `${cellSize}px`
-      cell.style.height = `${cellSize}px`
-      cell.style.background = "rgba(0, 247, 255, 0.5)"
-      cell.style.border = "1px solid #555"
-      if (ship.isHorizontal) {
-        cell.style.display = "inline-block"
-      } else {
-        cell.style.display = "block"
-      }
-      dragImage.appendChild(cell)
-    }
-
-    document.body.appendChild(dragImage)
-    e.dataTransfer.setDragImage(dragImage, 0, 0)
-
-    setTimeout(() => {
-      document.body.removeChild(dragImage)
-    }, 0)
   }
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault()
   }
 
   const handleDrop = (x: number, y: number) => {
     if (!draggedShip || draggedShip.placed) return
 
+    const GRID_SIZE = 10
     const coordinates: { x: number; y: number }[] = []
+
     let adjustedX = x
     let adjustedY = y
 
-    for (let i = 0; i < draggedShip.size; i++) {
-      const coordX = draggedShip.isHorizontal ? adjustedX + i : adjustedX
-      const coordY = draggedShip.isHorizontal ? adjustedY : adjustedY + i
-
-      if (coordX >= 10 || coordY >= 10) {
-        if (draggedShip.isHorizontal) {
-          adjustedX = Math.max(0, 10 - draggedShip.size)
-        } else {
-          adjustedY = Math.max(0, 10 - draggedShip.size)
-        }
-        break
-      }
+    if (draggedShip.isHorizontal) {
+      adjustedX = Math.max(0, Math.min(GRID_SIZE - draggedShip.size, x))
+    } else {
+      adjustedY = Math.max(0, Math.min(GRID_SIZE - draggedShip.size, y))
     }
 
     for (let i = 0; i < draggedShip.size; i++) {
@@ -314,8 +251,100 @@ const GamePage: React.FC = () => {
       coordinates.push({ x: coordX, y: coordY })
     }
 
+    console.log(
+      "Client calculated coordinates:",
+      coordinates,
+      "for ship:",
+      draggedShip.name
+    )
+
+    const player =
+      game?.player1?.id === (user?.id || "anonymous")
+        ? game.player1
+        : game?.player2
+    if (!player || !game) {
+      console.log(
+        "Cannot validate placement: Player or game state not available"
+      )
+      setPlacementError("Game state not ready. Please try again.")
+      return
+    }
+
+    console.log(
+      "Client grid state before validation:",
+      player.grid.map((row) => row.join(","))
+    )
+
+    const isValid = coordinates.every(
+      ({ x, y }) =>
+        x >= 0 &&
+        x < GRID_SIZE &&
+        y >= 0 &&
+        y < GRID_SIZE &&
+        player.grid[y][x] === "empty"
+    )
+    if (!isValid) {
+      console.log("Client validation failed:", {
+        coordinates,
+        grid: player.grid,
+      })
+      setPlacementError(
+        "Cannot place ship here. Please try a different position."
+      )
+      return
+    }
+
     handlePlaceShip(draggedShip.name, coordinates, draggedShip.isHorizontal)
     setDraggedShip(null)
+  }
+
+  const handlePlaceShip = (
+    shipName: string,
+    coordinates: { x: number; y: number }[],
+    isHorizontal: boolean
+  ) => {
+    if (socket && game && !isSpectator) {
+      console.log("Sending placeShip to server:", {
+        shipName,
+        coordinates,
+        isHorizontal,
+      })
+      setPlacementError(null)
+      socket.emit("placeShip", {
+        gameId: game.id,
+        shipName,
+        coordinates,
+        isHorizontal,
+      })
+      socket.once("gameUpdated", (updatedGame: GameType) => {
+        console.log("Received gameUpdated after placeShip:", updatedGame)
+        const player =
+          updatedGame.player1?.id === (user?.id || "anonymous")
+            ? updatedGame.player1
+            : updatedGame.player2
+        if (
+          player &&
+          player.ships.some(
+            (ship: ShipType) =>
+              ship.name === shipName && ship.coordinates.length > 0
+          )
+        ) {
+          console.log("Ship placed successfully on client:", {
+            shipName,
+            coordinates,
+          })
+          setShips((prevShips) =>
+            prevShips.map((ship) =>
+              ship.name === shipName ? { ...ship, placed: true } : ship
+            )
+          )
+          if (ships.every((ship) => ship.name === shipName || ship.placed)) {
+            setAllShipsPlaced(true)
+            setTimerActive(true)
+          }
+        }
+      })
+    }
   }
 
   const toggleOrientation = (shipName: string) => {
@@ -328,20 +357,125 @@ const GamePage: React.FC = () => {
     )
   }
 
-  if (!game)
+  const handleFireShot = (x: number, y: number) => {
+    if (
+      socket &&
+      game &&
+      !isSpectator &&
+      game.status === "playing" &&
+      game.currentTurn === (user?.id || "anonymous")
+    ) {
+      socket.emit("fireShot", { gameId: game.id, x, y })
+      setTimerActive(true)
+      setTimer(30)
+    }
+  }
+
+  if (
+    error &&
+    !error.includes("Invalid ship placement") &&
+    !error.includes("Not your turn")
+  ) {
     return (
-      <Text style={{ textAlign: "center", marginTop: "5rem" }}>Loading...</Text>
+      <PageLayout>
+        <CenteredTitle>Error</CenteredTitle>
+        <Text
+          style={{
+            textAlign: "center",
+            color: "#ff4444",
+            marginBottom: "1rem",
+          }}
+        >
+          {error}
+        </Text>
+        <div style={{ display: "flex", justifyContent: "center", gap: "1rem" }}>
+          <Button onClick={() => navigate("/lobby")} variant="primary">
+            Back to Lobby
+          </Button>
+          <Button
+            onClick={() => {
+              setGame(null)
+              setPlacementError(null)
+              setShips(SHIPS)
+              setAllShipsPlaced(false)
+              navigate(location.pathname + location.search)
+            }}
+            variant="secondary"
+          >
+            Retry Game
+          </Button>
+        </div>
+      </PageLayout>
     )
+  }
+
+  if (!game) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          width: "100vw",
+          background: "linear-gradient(to bottom, #1e3c72, #2a5298)",
+          backgroundSize: "cover",
+        }}
+      >
+        <Text
+          style={{
+            textAlign: "center",
+            marginTop: "5rem",
+            color: "#fff",
+            fontSize: "2rem",
+          }}
+        >
+          Loading...
+        </Text>
+      </div>
+    )
+  }
 
   const player =
-    game.player1.id === (user?.id || "anonymous") ? game.player1 : game.player2
+    game.player1?.id === (user?.id || "anonymous") ? game.player1 : game.player2
   const opponent =
-    game.player1.id === (user?.id || "anonymous") ? game.player2 : game.player1
+    game.player1?.id === (user?.id || "anonymous") ? game.player2 : game.player1
+
+  // Check if waiting for second player in multiplayer mode
+  if (isMultiplayer && !game.player2 && !isSpectator) {
+    const shareableLink = `${window.location.origin}/game?mode=multiplayer&gameId=${game.id}`
+    return (
+      <PageLayout>
+        <CenteredTitle>Waiting for Second Player</CenteredTitle>
+        <Text
+          style={{ textAlign: "center", marginBottom: "1rem", color: "#fff" }}
+        >
+          Share this link for faster joining:{" "}
+          <a href={shareableLink} style={{ color: "#00f7ff" }}>
+            {shareableLink}
+          </a>
+        </Text>
+        <Text
+          style={{ textAlign: "center", marginBottom: "1rem", color: "#fff" }}
+        >
+          Or share this code if the player is already on the platform:{" "}
+          <strong>{game.joinCode}</strong>
+        </Text>
+        <Button
+          onClick={() => navigate("/lobby")}
+          variant="primary"
+          style={{ display: "block", margin: "0 auto" }}
+        >
+          Back to Lobby
+        </Button>
+      </PageLayout>
+    )
+  }
 
   return (
     <PageLayout>
       <CenteredTitle>Battleship</CenteredTitle>
-      {error && (
+      {placementError && (
         <Text
           style={{
             textAlign: "center",
@@ -349,10 +483,9 @@ const GamePage: React.FC = () => {
             color: "#ff4444",
           }}
         >
-          {error}
+          {placementError}
         </Text>
       )}
-
       {game.status === "setup" && !allShipsPlaced && !isSpectator && (
         <>
           <Text style={{ textAlign: "center", marginBottom: "1rem" }}>
@@ -360,6 +493,18 @@ const GamePage: React.FC = () => {
             (4), Cruiser (3), Submarine (3), Destroyer (2). Drag and drop to
             place them on the grid.
           </Text>
+          {isMultiplayer && game.joinCode && (
+            <Text
+              style={{
+                textAlign: "center",
+                marginBottom: "1rem",
+                color: "#fff",
+              }}
+            >
+              Share this join code with your friend:{" "}
+              <strong>{game.joinCode}</strong>
+            </Text>
+          )}
           <div className="game-setup-container">
             <div>
               <Text
@@ -369,7 +514,12 @@ const GamePage: React.FC = () => {
                 Set Up Your Ships {isSinglePlayer ? "(vs AI)" : "(vs Player)"}
               </Text>
               <GameBoard
-                grid={player?.grid || []}
+                grid={
+                  player?.grid ||
+                  Array(10)
+                    .fill(null)
+                    .map(() => Array(10).fill("empty"))
+                }
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
               />
@@ -426,7 +576,6 @@ const GamePage: React.FC = () => {
           </div>
         </>
       )}
-
       {(game.status === "playing" || allShipsPlaced) && (
         <>
           <div
@@ -438,7 +587,7 @@ const GamePage: React.FC = () => {
               alignItems: "center",
               gap: "2rem",
               marginBottom: "2rem",
-              flexWrap: "wrap", // Ensure responsiveness
+              flexWrap: "wrap",
             }}
           >
             <div>
@@ -452,7 +601,14 @@ const GamePage: React.FC = () => {
               >
                 Your Board
               </Text>
-              <GameBoard grid={game.player1.grid} />
+              <GameBoard
+                grid={
+                  player?.grid ||
+                  Array(10)
+                    .fill(null)
+                    .map(() => Array(10).fill("empty"))
+                }
+              />
             </div>
             <div>
               <Text
@@ -467,13 +623,13 @@ const GamePage: React.FC = () => {
               </Text>
               <GameBoard
                 grid={
-                  game.player2?.grid ||
+                  opponent?.grid ||
                   Array(10)
                     .fill(null)
                     .map(() => Array(10).fill("empty"))
                 }
                 isOpponent
-                onCellClick={handleFireShot} // Pass the click handler
+                onCellClick={handleFireShot}
               />
               <Text
                 style={{
@@ -484,7 +640,7 @@ const GamePage: React.FC = () => {
               >
                 {isSpectator
                   ? `Current Turn: ${
-                      game.currentTurn === game.player1.id
+                      game.currentTurn === game.player1?.id
                         ? "Player 1"
                         : "Player 2"
                     }`
@@ -504,7 +660,7 @@ const GamePage: React.FC = () => {
                 <Text>
                   {isSpectator
                     ? `Shot by ${
-                        shotResult.shooter === game.player1.id
+                        shotResult.shooter === game.player1?.id
                           ? "Player 1"
                           : "Player 2"
                       }`
@@ -529,13 +685,12 @@ const GamePage: React.FC = () => {
           {(isMultiplayer || isSpectator) && gameId && <Chat gameId={gameId} />}
         </>
       )}
-
       {game.status === "finished" && (
         <div style={{ textAlign: "center" }}>
           <Text variant="h2" style={{ marginBottom: "1rem" }}>
             Game Over! Winner:{" "}
             {isSpectator
-              ? game.winner === game.player1.id
+              ? game.winner === game.player1?.id
                 ? "Player 1"
                 : "Player 2"
               : game.winner === (user?.id || "anonymous")

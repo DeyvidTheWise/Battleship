@@ -15,14 +15,14 @@ const Button: React.FC<ButtonProps> = ({
   variant = "primary",
   style,
   disabled,
-  type = "button", // Default to 'button'
+  type = "button",
 }) => (
   <button
     onClick={onClick}
     className={`button ${variant}`}
     style={style}
     disabled={disabled}
-    type={type} // Pass type to the HTML button
+    type={type}
   >
     {children}
   </button>

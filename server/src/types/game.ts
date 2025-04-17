@@ -21,9 +21,11 @@ export interface Player {
 
 export interface Game {
   id: string
-  player1: Player
+  joinCode: string | null
+  player1: Player | null
   player2: Player | null
   currentTurn: string
   status: "setup" | "playing" | "finished"
   winner: string | null
+  createdAt: number
 }
