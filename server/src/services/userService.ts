@@ -3,6 +3,7 @@ import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { db } from "./dbService"
 import { RowDataPacket } from "mysql2"
+import { User } from "@shared-types/user"
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret"
 
@@ -59,23 +60,32 @@ export const loginUser = async (email: string, password: string) => {
   }
 }
 
-export const getUserById = async (id: string) => {
+export const getUserById = async (id: string): Promise<User | null> => {
   const [rows] = await db.query<RowDataPacket[]>(
-    "SELECT id, firstname, lastname, email, xp, bio FROM users WHERE id = ?",
+    "SELECT * FROM users WHERE id = ?",
     [id]
   )
-
-  if (rows.length === 0) {
-    throw new Error("User not found")
-  }
-
-  return rows[0]
+  if (rows.length === 0) return null
+  const user = rows[0] as User
+  return user
 }
 
-export const updateUserXp = async (id: string, xp: number) => {
+export const updateUserXp = async (id: string, xp: number): Promise<void> => {
   await db.query("UPDATE users SET xp = xp + ? WHERE id = ?", [xp, id])
 }
 
 export const updateUserBio = async (id: string, bio: string) => {
   await db.query("UPDATE users SET bio = ? WHERE id = ?", [bio, id])
+}
+
+export const saveGameHistory = async (
+  userId: string,
+  opponentId: string,
+  result: "win" | "loss",
+  xpEarned: number
+): Promise<void> => {
+  await db.query(
+    "INSERT INTO game_history (user_id, opponent_id, result, xp_earned) VALUES (?, ?, ?, ?)",
+    [userId, opponentId, result, xpEarned]
+  )
 }

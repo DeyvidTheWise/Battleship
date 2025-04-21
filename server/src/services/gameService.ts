@@ -12,6 +12,15 @@ import { db } from "./dbService"
 
 const GRID_SIZE = 10
 
+export interface ShotResult {
+  shooter: string
+  x: number
+  y: number
+  hit: boolean
+  sunk: boolean
+  gameOver: boolean
+}
+
 const SHIPS: ShipType[] = [
   {
     name: "Carrier",
@@ -124,6 +133,10 @@ export const createGame = (
     placeAIShips(aiPlayer)
     game.player2 = aiPlayer
     console.log("AI player initialized:", aiPlayer)
+    console.log(
+      "Serialized gameUpdated payload:",
+      JSON.stringify(game, null, 2)
+    )
     io.to(game.id).emit("gameUpdated", game)
   }
 
@@ -134,7 +147,7 @@ export const createGame = (
   if (game.player2) {
     console.log(
       "Player 2 grid initialization:",
-      game.player2.grid.map((row) => row.join(","))
+      game.player2.grid.map((row) => row.join, ",")
     )
   }
 
@@ -153,10 +166,64 @@ export const findGameByJoinCode = (joinCode: string): GameType | undefined => {
 
 export const joinGame = (gameId: string, player2Id: string): GameType => {
   const game = games.get(gameId)
-  if (!game) throw new Error("Game not found")
-  if (game.player2) throw new Error("Game already has two players")
-  if (game.player1?.id === player2Id)
+  if (!game) {
+    console.log("Game not found for gameId:", gameId)
+    console.log(
+      "Current games in map:",
+      Array.from(games.entries()).map(([id, g]) => ({
+        id,
+        player1: g.player1?.id,
+        player2: g.player2?.id,
+      }))
+    )
+    throw new Error("Game not found")
+  }
+  console.log("Joining game:", {
+    gameId,
+    player1: game.player1?.id,
+    player2: game.player2?.id,
+    joiningPlayer: player2Id,
+  })
+
+  // Clear any existing games for the joining player, excluding the current game
+  const existingGames = Array.from(games.entries()).filter(
+    ([id, g]) =>
+      id !== gameId &&
+      (g.player1?.id === player2Id || g.player2?.id === player2Id)
+  )
+  for (const [existingGameId, existingGame] of existingGames) {
+    console.log(
+      "Removing existing game for joining player:",
+      player2Id,
+      "Game ID:",
+      existingGameId
+    )
+    if (existingGame.joinCode) joinCodes.delete(existingGame.joinCode)
+    games.delete(existingGameId)
+  }
+
+  // Re-fetch the game to ensure it's still available
+  const updatedGame = games.get(gameId)
+  if (!updatedGame) {
+    console.log("Game no longer exists after clearing stale state:", gameId)
+    throw new Error("Game not found")
+  }
+
+  if (
+    updatedGame.player1?.id === player2Id ||
+    updatedGame.player2?.id === player2Id
+  ) {
+    console.log("Player already in game:", player2Id)
     throw new Error("You are already in this game")
+  }
+
+  if (updatedGame.player2) {
+    console.log("Game already has two players:", {
+      player1: updatedGame.player1?.id,
+      player2: updatedGame.player2?.id,
+    })
+    throw new Error("Game already has two players")
+  }
 
   const player2: Player = {
     id: player2Id,
@@ -165,9 +232,12 @@ export const joinGame = (gameId: string, player2Id: string): GameType => {
       Array.from({ length: GRID_SIZE }, () => "empty")
     ),
   }
-  game.player2 = player2
-  console.log("Game after joining:", game)
-  return game
+  updatedGame.player2 = player2
+  console.log("Game after joining:", {
+    player1: updatedGame.player1?.id,
+    player2: updatedGame.player2?.id,
+  })
+  return updatedGame
 }
 
 export const placeShip = (
@@ -177,84 +247,108 @@ export const placeShip = (
   coordinates: { x: number; y: number }[],
   isHorizontal: boolean
 ): void => {
-  const game = games.get(gameId)
-  if (!game) throw new Error("Game not found")
-
-  const player = game.player1?.id === playerId ? game.player1 : game.player2
-  if (!player) throw new Error("Player not found")
-
-  console.log("Placing ship for player:", player.id, "Player ID:", playerId)
-  console.log("Game state:", {
-    player1Id: game.player1?.id,
-    player2Id: game.player2?.id,
-  })
-
-  const shipSpec = SHIPS.find((s) => s.name === shipName)
-  if (!shipSpec) throw new Error("Invalid ship name")
-
-  if (coordinates.length !== shipSpec.size) throw new Error("Invalid ship size")
-
-  console.log("Attempting to place ship:", {
-    shipName,
-    coordinates,
-    isHorizontal,
-  })
-  console.log(
-    "Server grid state before placement (player:",
-    player.id,
-    "):",
-    player.grid.map((row) => row.join(","))
-  )
-
-  for (const { x, y } of coordinates) {
-    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) {
-      console.log("Invalid coordinates:", { x, y })
-      throw new Error("Invalid ship placement: Coordinates out of bounds")
+  try {
+    const game = games.get(gameId)
+    if (!game) {
+      console.error("Game not found for gameId:", gameId)
+      throw new Error("Game not found")
     }
-    if (player.grid[y][x] !== "empty") {
-      console.log("Position already occupied:", {
-        x,
-        y,
-        gridValue: player.grid[y][x],
-      })
-      console.log(
-        "Current grid state:",
-        player.grid.map((row) => row.join(","))
+
+    const player = game.player1?.id === playerId ? game.player1 : game.player2
+    if (!player) {
+      console.error(
+        "Player not found for playerId:",
+        playerId,
+        "Game players:",
+        {
+          player1: game.player1?.id,
+          player2: game.player2?.id,
+        }
       )
-      throw new Error("Invalid ship placement: Position already occupied")
+      throw new Error("Player not found")
     }
+
+    console.log("Placing ship for player:", player.id, "Player ID:", playerId)
+    console.log("Game state before placement:", {
+      player1Id: game.player1?.id,
+      player2Id: game.player2?.id,
+    })
+    console.log(
+      "Player grid before placement:",
+      player.grid.map((row) => row.join(","))
+    )
+
+    const shipSpec = SHIPS.find((s) => s.name === shipName)
+    if (!shipSpec) {
+      console.error("Invalid ship name:", shipName)
+      throw new Error("Invalid ship name")
+    }
+
+    if (coordinates.length !== shipSpec.size) {
+      console.error("Invalid ship size:", { shipName, coordinates })
+      throw new Error("Invalid ship size")
+    }
+
+    console.log("Attempting to place ship:", {
+      shipName,
+      coordinates,
+      isHorizontal,
+    })
+
+    for (const { x, y } of coordinates) {
+      if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE) {
+        console.error("Invalid coordinates:", { x, y })
+        throw new Error("Invalid ship placement: Coordinates out of bounds")
+      }
+      if (player.grid[y][x] !== "empty") {
+        console.error("Position already occupied:", {
+          x,
+          y,
+          gridValue: player.grid[y][x],
+        })
+        console.log(
+          "Current grid state:",
+          player.grid.map((row) => row.join(","))
+        )
+        throw new Error("Invalid ship placement: Position already occupied")
+      }
+    }
+
+    const ship: ShipType = {
+      name: shipName,
+      size: shipSpec.size,
+      coordinates,
+      hits: 0,
+      isSunk: false,
+      isHorizontal,
+      placed: true,
+    }
+    player.ships.push(ship)
+    coordinates.forEach(({ x, y }) => {
+      player.grid[y][x] = "ship"
+    })
+
+    console.log("Ship placed successfully:", { shipName, coordinates })
+    console.log(
+      "Player grid after placement:",
+      player.grid.map((row) => row.join(","))
+    )
+
+    games.set(gameId, game)
+    console.log("Emitting gameUpdated event with game state:", {
+      gameId: game.id,
+      player1Ships: game.player1?.ships,
+      player2Ships: game.player2?.ships,
+    })
+    console.log(
+      "Serialized gameUpdated payload:",
+      JSON.stringify(game, null, 2)
+    )
+    io.to(gameId).emit("gameUpdated", game)
+  } catch (error) {
+    console.error("Error in placeShip:", error)
+    throw error // Ensure the error is propagated to the client
   }
-
-  const ship: ShipType = {
-    name: shipName,
-    size: shipSpec.size,
-    coordinates,
-    hits: 0,
-    isSunk: false,
-    isHorizontal,
-    placed: true,
-  }
-  player.ships.push(ship)
-  coordinates.forEach(({ x, y }) => {
-    player.grid[y][x] = "ship"
-  })
-
-  console.log("Ship placed successfully:", { shipName, coordinates })
-  console.log(
-    "Server grid state after placement (player:",
-    player.id,
-    "):",
-    player.grid.map((row) => row.join(","))
-  )
-
-  if (
-    game.player1?.ships.length === SHIPS.length &&
-    (!game.player2 || game.player2.ships.length === SHIPS.length)
-  ) {
-    game.status = "playing"
-  }
-
-  io.to(gameId).emit("gameUpdated", game)
 }
 
 const saveGameHistory = async (
@@ -270,38 +364,30 @@ const saveGameHistory = async (
   )
 }
 
-export const fireShot = (
-  gameId: string,
-  playerId: string,
+const validateShot = (x: number, y: number, grid: string[][]): boolean => {
+  return (
+    x >= 0 &&
+    x < GRID_SIZE &&
+    y >= 0 &&
+    y < GRID_SIZE &&
+    grid[y][x] !== "hit" &&
+    grid[y][x] !== "miss"
+  )
+}
+
+const processHit = (
   x: number,
-  y: number
-): { hit: boolean; sunk: boolean; gameOver: boolean } => {
-  const game = games.get(gameId)
-  if (!game || game.status !== "playing")
-    throw new Error("Game not found or not in progress")
-  if (game.currentTurn !== playerId) throw new Error("Not your turn")
-
-  const opponent = game.player1?.id === playerId ? game.player2 : game.player1
-  if (!opponent) throw new Error("Opponent not found")
-
-  if (
-    x < 0 ||
-    x >= GRID_SIZE ||
-    y < 0 ||
-    y >= GRID_SIZE ||
-    opponent.grid[y][x] === "hit" ||
-    opponent.grid[y][x] === "miss"
-  ) {
-    throw new Error("Invalid shot")
-  }
-
-  const hit = opponent.grid[y][x] === "ship"
-  opponent.grid[y][x] = hit ? "hit" : "miss"
+  y: number,
+  grid: string[][],
+  ships: ShipType[]
+): { hit: boolean; sunk: boolean } => {
+  const hit = grid[y][x] === "ship"
+  grid[y][x] = hit ? "hit" : "miss"
 
   let sunk = false
   if (hit) {
-    const ship = opponent.ships.find((s: ShipType) =>
-      s.coordinates.some((coord: Coordinate) => coord.x === x && coord.y === y)
+    const ship = ships.find((s) =>
+      s.coordinates.some((coord) => coord.x === x && coord.y === y)
     )
     if (ship) {
       ship.hits++
@@ -312,18 +398,41 @@ export const fireShot = (
     }
   }
 
-  const gameOver = opponent.ships.every((ship: ShipType) => ship.isSunk)
+  return { hit, sunk }
+}
+
+export const fireShot = (
+  gameId: string,
+  x: number,
+  y: number,
+  playerId: string
+): ShotResult => {
+  const game = games.get(gameId)
+  if (!game) throw new Error("Game not found")
+  if (game.status !== "playing") throw new Error("Game not in playing phase")
+  if (game.currentTurn !== playerId) throw new Error("Not your turn")
+
+  const opponent = game.player1?.id === playerId ? game.player2 : game.player1
+  if (!opponent) throw new Error("Opponent not found")
+
+  if (!validateShot(x, y, opponent.grid)) throw new Error("Invalid shot")
+
+  const { hit, sunk } = processHit(x, y, opponent.grid, opponent.ships)
+
+  const gameOver = opponent.ships.every((ship) => ship.isSunk)
   if (!gameOver) {
     game.currentTurn = opponent.id
   } else {
     game.status = "finished"
     game.winner = playerId
-    // Only save XP and history for logged-in users (not 'anonymous')
     if (playerId !== "anonymous" && opponent.id !== "anonymous") {
       updateUserXp(playerId, 100)
       updateUserXp(opponent.id, 20)
       saveGameHistory(playerId, opponent.id, "win", 100)
       saveGameHistory(opponent.id, playerId, "loss", 20)
+    } else if (playerId !== "anonymous" && opponent.id === "AI") {
+      updateUserXp(playerId, 100)
+      saveGameHistory(playerId, "AI", "win", 100)
     }
   }
 
@@ -331,7 +440,7 @@ export const fireShot = (
     setTimeout(() => aiFireShot(gameId), 1000)
   }
 
-  return { hit, sunk, gameOver }
+  return { shooter: playerId, x, y, hit, sunk, gameOver }
 }
 
 const aiFireShot = (gameId: string) => {
@@ -339,44 +448,25 @@ const aiFireShot = (gameId: string) => {
   if (!game || game.status !== "playing" || game.currentTurn !== "AI") return
 
   const player = game.player1
-  if (!player) return // Exit if player is null
+  if (!player) return
 
-  let x: number = 0
-  let y: number = 0
+  let x: number, y: number
   let validShot = false
 
-  while (!validShot) {
+  do {
     x = Math.floor(Math.random() * GRID_SIZE)
     y = Math.floor(Math.random() * GRID_SIZE)
-    if (player.grid[y][x] !== "hit" && player.grid[y][x] !== "miss") {
-      validShot = true
-    }
-  }
+    validShot = validateShot(x, y, player.grid)
+  } while (!validShot)
 
-  const hit = player.grid[y][x] === "ship"
-  player.grid[y][x] = hit ? "hit" : "miss"
+  const { hit, sunk } = processHit(x, y, player.grid, player.ships)
 
-  let sunk = false
-  if (hit) {
-    const ship = player.ships.find((s: ShipType) =>
-      s.coordinates.some((coord: Coordinate) => coord.x === x && coord.y === y)
-    )
-    if (ship) {
-      ship.hits++
-      if (ship.hits === ship.size) {
-        ship.isSunk = true
-        sunk = true
-      }
-    }
-  }
-
-  const gameOver = player.ships.every((ship: ShipType) => ship.isSunk)
+  const gameOver = player.ships.every((ship) => ship.isSunk)
   if (!gameOver) {
     game.currentTurn = player.id
   } else {
     game.status = "finished"
     game.winner = "AI"
-    // Only save XP and history for logged-in users (not 'anonymous')
     if (player.id !== "anonymous") {
       updateUserXp(player.id, 20)
       saveGameHistory(player.id, "AI", "loss", 20)
@@ -385,6 +475,7 @@ const aiFireShot = (gameId: string) => {
   }
 
   io.to(gameId).emit("shotResult", { shooter: "AI", x, y, hit, sunk, gameOver })
+  console.log("Serialized gameUpdated payload:", JSON.stringify(game, null, 2))
   io.to(gameId).emit("gameUpdated", game)
 }
 
@@ -435,40 +526,43 @@ export const removePlayerFromGame = (
   const game = games.get(gameId)
   if (!game) return null
 
+  console.log("Removing player from game:", {
+    gameId,
+    playerId,
+    player1: game.player1?.id,
+    player2: game.player2?.id,
+  })
+
   if (game.player1?.id === playerId) {
     game.player1 = null
   } else if (game.player2?.id === playerId) {
     game.player2 = null
+  } else {
+    return game
   }
 
-  const playerCount = (game.player1 ? 1 : 0) + (game.player2 ? 1 : 0)
-  if (playerCount === 0 || (game.player2 && game.player2.id === "AI")) {
-    // For AI games or empty games, delete immediately
+  if (game.status === "setup" && (!game.player1 || !game.player2)) {
+    console.log("Game in setup phase, keeping alive:", {
+      gameId,
+      player1: game.player1?.id,
+      player2: game.player2?.id,
+    })
+    return game
+  }
+
+  if (!game.player1 && !game.player2) {
+    console.log("Deleting game due to no players or AI game:", gameId)
     if (game.joinCode) joinCodes.delete(game.joinCode)
     games.delete(gameId)
     return null
-  } else {
-    // For multiplayer games, keep the game alive for 5 minutes
-    setTimeout(() => {
-      const updatedGame = games.get(gameId)
-      if (updatedGame && !updatedGame.player1 && !updatedGame.player2) {
-        if (updatedGame.joinCode) joinCodes.delete(updatedGame.joinCode)
-        games.delete(gameId)
-        io.emit(
-          "gameListUpdate",
-          Array.from(games.values()).map((g) => ({
-            id: g.id,
-            joinCode: g.joinCode,
-            playerCount: (g.player1 ? 1 : 0) + (g.player2 ? 1 : 0),
-            playerNames: [g.player1, g.player2]
-              .filter((p): p is Player => p !== null)
-              .map((p) => (p.id === "AI" ? "AI" : p.id)),
-          }))
-        )
-      }
-    }, 5 * 60 * 1000) // 5 minutes
-    return game
   }
+
+  if (game.status === "playing") {
+    game.status = "finished"
+    game.winner = game.player1 ? game.player1.id : game.player2!.id
+  }
+
+  return game
 }
 
-export { games }
+export { games, GameType, joinCodes }
