@@ -1,0 +1,12 @@
+.chatMessage {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--cool-gray);
+}
+
+.chatMessage:hover {
+  background-color: var(--seafoam-green);
+  color: var(--soft-white);
+}

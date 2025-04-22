@@ -1,0 +1,32 @@
+.authTemplate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  min-height: 100vh;
+  background-color: var(--deep-navy);
+  padding: 24px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background-color: var(--soft-white);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.input {
+  padding: 8px;
+  font-family: "Inter", sans-serif;
+  border: 1px solid var(--cool-gray);
+  border-radius: 4px;
+}
+
+.oauthButtons {
+  display: flex;
+  gap: 16px;
+}

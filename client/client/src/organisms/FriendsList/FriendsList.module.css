@@ -1,0 +1,21 @@
+.friendsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background-color: var(--soft-white);
+  border-radius: 12px;
+}
+
+.friend {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid var(--cool-gray);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}

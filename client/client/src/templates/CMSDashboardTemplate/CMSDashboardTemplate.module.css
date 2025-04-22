@@ -1,0 +1,19 @@
+.cmsDashboardTemplate {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--deep-navy);
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+@media (max-width: 768px) {
+  .cmsDashboardTemplate {
+    flex-direction: column;
+  }
+}

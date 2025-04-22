@@ -1,0 +1,9 @@
+.heroSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 40px;
+  background-color: var(--deep-navy);
+  border-radius: 12px;
+}

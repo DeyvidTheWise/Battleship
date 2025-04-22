@@ -1,0 +1,11 @@
+.dot {
+  font-size: 24px;
+}
+
+.hit {
+  color: var(--hot-pink);
+}
+
+.miss {
+  color: var(--gray);
+}

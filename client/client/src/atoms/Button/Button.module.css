@@ -1,0 +1,37 @@
+.button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-family: "Inter", sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 100ms ease-in, filter 100ms ease-in;
+}
+
+.primary {
+  background-color: var(--seafoam-green);
+  color: var(--soft-white);
+  border: none;
+}
+
+.primary:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+.secondary {
+  background-color: transparent;
+  color: var(--dark-gray);
+  border: 1px solid var(--seafoam-green);
+}
+
+.secondary:hover {
+  transform: scale(1.05);
+}
+
+.disabled {
+  background-color: var(--dark-gray);
+  color: var(--soft-white);
+  border: none;
+  cursor: not-allowed;
+}

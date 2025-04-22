@@ -1,0 +1,14 @@
+.analyticsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background-color: var(--soft-white);
+  border-radius: 12px;
+}
+
+.charts {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+}

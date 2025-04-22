@@ -1,0 +1,12 @@
+.tableCell {
+  padding: 8px 16px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--dark-gray);
+  border-bottom: 1px solid var(--cool-gray);
+}
+
+.highlighted {
+  background-color: var(--seafoam-green);
+  color: var(--soft-white);
+}

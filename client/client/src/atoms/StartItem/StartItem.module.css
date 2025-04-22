@@ -1,0 +1,15 @@
+.statItem {
+  display: flex;
+  gap: 8px;
+  font-family: "Inter", sans-serif;
+}
+
+.label {
+  font-weight: 500;
+  color: var(--dark-gray);
+}
+
+.value {
+  font-weight: 400;
+  color: var(--seafoam-green);
+}

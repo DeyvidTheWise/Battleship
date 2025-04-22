@@ -1,0 +1,13 @@
+.dropdownItem {
+  padding: 8px 16px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  color: var(--dark-gray);
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.dropdownItem:hover {
+  background-color: var(--seafoam-green);
+  color: var(--soft-white);
+}

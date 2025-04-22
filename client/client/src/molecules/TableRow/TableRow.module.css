@@ -1,0 +1,7 @@
+.tableRow {
+  transition: background-color 200ms ease;
+}
+
+.tableRow:hover {
+  background-color: var(--seafoam-green);
+}

@@ -1,0 +1,19 @@
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  font-family: "Inter", sans-serif;
+  font-size: 16px;
+  color: var(--soft-white);
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.sidebarItem:hover {
+  background-color: var(--seafoam-green);
+}
+
+.active {
+  background-color: var(--seafoam-green);
+}

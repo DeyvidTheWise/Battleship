@@ -1,0 +1,8 @@
+.homepageTemplate {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 100vh;
+  background-color: var(--deep-navy);
+  padding: 24px;
+}

@@ -1,0 +1,5 @@
+.gridRow {
+  display: flex;
+  gap: 1px;
+  align-items: center;
+}

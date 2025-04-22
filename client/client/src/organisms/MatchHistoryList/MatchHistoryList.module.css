@@ -1,0 +1,10 @@
+.matchHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 16px;
+  background-color: var(--soft-white);
+  border-radius: 12px;
+}

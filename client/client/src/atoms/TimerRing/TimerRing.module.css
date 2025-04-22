@@ -1,0 +1,35 @@
+.timerRing {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timerText {
+  position: absolute;
+  font-family: "Space Mono", monospace;
+  font-size: 16px;
+  color: var(--dark-gray);
+}
+
+.timerRing svg circle {
+  transition: stroke 300ms ease, stroke-dasharray 1000ms linear;
+}
+
+.timerRing:hover {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

@@ -1,0 +1,19 @@
+.gameScreenTemplate {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 100vh;
+  background-color: var(--deep-navy);
+  padding: 24px;
+}
+
+.mainContent {
+  display: flex;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .mainContent {
+    flex-direction: column;
+  }
+}

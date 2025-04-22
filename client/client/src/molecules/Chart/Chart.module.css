@@ -1,0 +1,5 @@
+.chart {
+  background-color: var(--soft-white);
+  border-radius: 8px;
+  padding: 16px;
+}

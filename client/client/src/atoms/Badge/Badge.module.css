@@ -1,0 +1,18 @@
+.badge {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  text-align: center;
+}
+
+.unlocked {
+  background-color: var(--seafoam-green);
+  color: var(--soft-white);
+}
+
+.locked {
+  background-color: var(--dark-gray);
+  color: var(--soft-white);
+  filter: grayscale(100%);
+}

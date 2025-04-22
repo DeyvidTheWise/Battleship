@@ -1,0 +1,12 @@
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background-color: var(--deep-navy);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+  }
+}
