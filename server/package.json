@@ -1,37 +1,42 @@
 {
-  "name": "battleship-backend",
+  "name": "battleship-server",
   "version": "1.0.0",
+  "description": "Server for Battleship game",
+  "main": "src/index.ts",
   "scripts": {
-    "start": "nodemon src/server.ts",
+    "start": "ts-node src/index.ts",
+    "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
-    "test": "jest"
+    "serve": "node dist/index.js",
+    "test": "jest",
+    "lint": "eslint . --ext .ts",
+    "migrate": "ts-node src/database/migrations.ts"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^5.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.6.0",
-    "node-cron": "^3.0.3",
-    "socket.io": "^4.7.2",
-    "sqlite3": "^5.1.6",
-    "winston": "^3.11.0"
+    "jsonwebtoken": "^9.0.0",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.2.0",
+    "socket.io": "^4.6.1",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.0",
+    "@types/cors": "^2.8.13",
     "@types/express": "^4.17.17",
-    "@types/jest": "^29.5.5",
-    "@types/jsonwebtoken": "^9.0.2",
-    "@types/node": "^18.17.0",
-    "@types/node-cron": "^3.0.7",
-    "@types/sinon": "^10.0.16",
-    "@types/socket.io": "^3.0.2",
-    "@types/sqlite3": "^3.1.8",
-    "@types/uuid": "^10.0.0",
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.1",
-    "sinon": "^15.2.0",
-    "ts-jest": "^29.1.1",
+    "@types/jest": "^29.5.0",
+    "@types/jsonwebtoken": "^9.0.1",
+    "@types/morgan": "^1.9.4",
+    "@types/node": "^18.15.11",
+    "@types/uuid": "^9.0.1",
+    "eslint": "^8.37.0",
+    "jest": "^29.5.0",
+    "nodemon": "^2.0.22",
+    "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.0.3"
   }
 }

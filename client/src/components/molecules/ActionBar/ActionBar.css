@@ -1,0 +1,31 @@
+.action-bar {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.action-bar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-bar .randomize-btn {
+  border-color: #a3bffa;
+  color: #a3bffa;
+}
+
+.action-bar .surrender-btn {
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+
+.action-bar .play-again-btn {
+  background-color: #4ecdc4;
+  color: #f5f7fa;
+}
+
+.action-bar .play-again-btn:hover {
+  background-color: rgba(78, 205, 196, 0.9);
+}

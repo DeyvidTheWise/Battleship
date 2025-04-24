@@ -1,0 +1,170 @@
+.leaderboard {
+  background-color: #1a2a44;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: #2d3748;
+  border-bottom: 1px solid #4a4a4a;
+}
+
+.leaderboard-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #4ecdc4;
+  margin: 0;
+}
+
+.leaderboard-filters {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.leaderboard-filters button {
+  background-color: transparent;
+  border: 1px solid #4a4a4a;
+  color: #a3bffa;
+}
+
+.leaderboard-filters button.active {
+  background-color: #4ecdc4;
+  border-color: #4ecdc4;
+  color: #1a2a44;
+}
+
+.leaderboard-loading {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #a3bffa;
+}
+
+.leaderboard-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.leaderboard-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid #4a4a4a;
+}
+
+.leaderboard-table th {
+  font-weight: 600;
+  color: #a3bffa;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.leaderboard-table tr:last-child td {
+  border-bottom: none;
+}
+
+.rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: #2d3748;
+  font-weight: 600;
+}
+
+.rank-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.rank-icon.gold {
+  color: #ffd700;
+}
+
+.rank-icon.silver {
+  color: #c0c0c0;
+}
+
+.rank-icon.bronze {
+  color: #cd7f32;
+}
+
+.player-name {
+  font-weight: 500;
+}
+
+.elo {
+  font-weight: 600;
+  color: #4ecdc4;
+}
+
+.win-rate {
+  color: #a3bffa;
+}
+
+.current-user {
+  background-color: rgba(78, 205, 196, 0.1);
+}
+
+.current-user-rank {
+  padding: 1.5rem;
+  border-top: 1px solid #4a4a4a;
+}
+
+.rank-label {
+  font-size: 0.875rem;
+  color: #a3bffa;
+  margin-bottom: 0.5rem;
+}
+
+.rank-details {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.rank-position {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4ecdc4;
+}
+
+.rank-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.rank-elo,
+.rank-win-rate {
+  font-size: 0.875rem;
+  color: #f5f7fa;
+}
+
+@media (max-width: 640px) {
+  .hide-mobile {
+    display: none;
+  }
+
+  .leaderboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 0.75rem 1rem;
+  }
+}

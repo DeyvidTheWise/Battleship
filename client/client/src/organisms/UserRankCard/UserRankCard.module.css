@@ -1,8 +1,0 @@
-.userRankCard {
-  display: flex;
-  justify-content: space-between;
-  padding: 16px;
-  background-color: var(--soft-white);
-  border: 2px solid var(--seafoam-green);
-  border-radius: 12px;
-}

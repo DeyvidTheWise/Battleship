@@ -1,0 +1,119 @@
+.lobby-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.lobby-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.lobby-games {
+  background-color: var(--secondary);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.lobby-games-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.lobby-games-title {
+  font-weight: 600;
+}
+
+.lobby-games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.lobby-game-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: var(--background);
+  border-radius: 0.25rem;
+}
+
+.lobby-game-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.lobby-game-host {
+  font-weight: 500;
+}
+
+.lobby-game-status {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.lobby-create-game {
+  background-color: var(--secondary);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.lobby-create-title {
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.lobby-create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lobby-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lobby-form-group label {
+  font-weight: 500;
+}
+
+.lobby-form-group input,
+.lobby-form-group select {
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  color: var(--text);
+}
+
+.lobby-create-button {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: 0.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.lobby-create-button:hover {
+  background-color: var(--primary-hover);
+}

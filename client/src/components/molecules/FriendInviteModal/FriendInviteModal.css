@@ -1,0 +1,147 @@
+.friend-invite-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.friend-invite-modal {
+  width: 100%;
+  max-width: 500px;
+  background-color: #2d3748;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.friend-invite-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #4a4a4a;
+}
+
+.friend-invite-modal-header h3 {
+  margin: 0;
+  font-weight: 600;
+  color: #4ecdc4;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  color: #a3bffa;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover {
+  background-color: rgba(163, 191, 250, 0.1);
+}
+
+.friend-invite-modal-content {
+  padding: 1.5rem;
+}
+
+.search-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-input {
+  flex: 1;
+  background-color: #1a2a44;
+  border-color: #4a4a4a;
+  color: #f5f7fa;
+}
+
+.search-button {
+  background-color: #4ecdc4;
+  color: #1a2a44;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searching-message,
+.no-results {
+  text-align: center;
+  padding: 2rem 0;
+  color: #a3bffa;
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-result {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: #1a2a44;
+  border-radius: 0.375rem;
+}
+
+.user-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: #4ecdc4;
+  color: #1a2a44;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-right: 1rem;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-username {
+  font-weight: 500;
+}
+
+.invite-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #4ecdc4;
+  color: #1a2a44;
+  font-size: 0.875rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .friend-invite-modal {
+    width: calc(100% - 2rem);
+    margin: 0 1rem;
+  }
+}

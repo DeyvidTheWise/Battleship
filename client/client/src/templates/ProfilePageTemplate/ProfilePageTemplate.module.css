@@ -1,8 +1,0 @@
-.profilePageTemplate {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  min-height: 100vh;
-  background-color: var(--deep-navy);
-  padding: 24px;
-}

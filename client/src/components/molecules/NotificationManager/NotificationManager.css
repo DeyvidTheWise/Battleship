@@ -1,0 +1,11 @@
+.notification-manager {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.notification-manager > * {
+  pointer-events: auto;
+}

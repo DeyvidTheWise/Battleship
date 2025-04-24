@@ -1,0 +1,23 @@
+.multiplayer-lobby {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .multiplayer-lobby {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.multiplayer-lobby__games {
+  background-color: #2d3748;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.multiplayer-lobby__chat {
+  background-color: #2d3748;
+  border-radius: 0.5rem;
+  height: 100%;
+}

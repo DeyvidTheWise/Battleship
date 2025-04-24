@@ -1,2 +1,0 @@
-INSERT INTO Users (user_id, email, username, password, elo, wins, losses, created_at)
-VALUES ('admin-uuid-1234', 'admin@example.com', 'admin', '$2b$10$examplehashedpassword', 1000, 0, 0, CURRENT_TIMESTAMP);

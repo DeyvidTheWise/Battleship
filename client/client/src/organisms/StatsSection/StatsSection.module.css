@@ -1,7 +1,0 @@
-.statsSection {
-  display: flex;
-  gap: 24px;
-  padding: 16px;
-  background-color: var(--soft-white);
-  border-radius: 12px;
-}

@@ -1,0 +1,167 @@
+.game-over-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(26, 42, 68, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.game-over-modal {
+  width: 100%;
+  max-width: 900px;
+  background-color: #2d3748;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+  padding: 1.5rem;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.victory-title,
+.defeat-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.victory-title {
+  color: #4ecdc4;
+}
+
+.defeat-title {
+  color: #ff6b6b;
+}
+
+.game-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 800px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #1a2a44;
+  padding: 1rem;
+  border-radius: 0.375rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #a3bffa;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #f5f7fa;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.play-again-btn,
+.main-menu-btn {
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
+  min-width: 150px;
+}
+
+.play-again-btn {
+  background-color: #4ecdc4;
+  color: #1a2a44;
+  border: none;
+}
+
+.play-again-btn:hover {
+  background-color: #3dbdb5;
+  transform: translateY(-2px);
+}
+
+.main-menu-btn {
+  background-color: transparent;
+  color: #f5f7fa;
+  border: 2px solid #4ecdc4;
+}
+
+.main-menu-btn:hover {
+  background-color: rgba(78, 205, 196, 0.1);
+  transform: translateY(-2px);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .game-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .game-over-modal {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-stats {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .play-again-btn,
+  .main-menu-btn {
+    width: 100%;
+  }
+
+  .victory-title,
+  .defeat-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+}

@@ -1,7 +1,0 @@
-.sidebarMenu {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  background-color: var(--deep-navy);
-  padding: 16px;
-}

@@ -1,0 +1,35 @@
+.game-mode-card {
+  height: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  background-color: #2d3748;
+  border-color: #4a4a4a;
+}
+
+.game-mode-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.game-mode-card-title {
+  color: #f5f7fa;
+}
+
+.game-mode-card-description {
+  color: #a3bffa;
+  font-size: 0.875rem;
+}
+
+.game-mode-card-auth {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #a3bffa;
+}
+
+.game-mode-card-auth svg {
+  margin-right: 0.25rem;
+  height: 0.75rem;
+  width: 0.75rem;
+}

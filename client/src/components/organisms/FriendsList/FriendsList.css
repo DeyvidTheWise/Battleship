@@ -1,0 +1,29 @@
+.friends-list {
+  background-color: #2d3748;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.friends-list__header {
+  padding: 1rem;
+  border-bottom: 1px solid #4a4a4a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.friends-list__content {
+  padding: 1rem;
+}
+
+.friends-list__item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.friends-list__item:hover {
+  background-color: #1a2a44;
+}

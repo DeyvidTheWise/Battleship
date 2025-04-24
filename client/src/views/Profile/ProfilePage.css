@@ -1,0 +1,590 @@
+.profile-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.profile-avatar {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  background-color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--primary-foreground);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar.avatar-fallback {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.profile-username {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.profile-bio {
+  color: var(--text-muted);
+  max-width: 500px;
+  margin-bottom: 1rem;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-stat-value {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.profile-stat-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.profile-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.profile-tabs {
+  margin-bottom: 1.5rem;
+}
+
+.profile-tab-list {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.profile-tab {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.profile-tab:hover {
+  color: var(--primary);
+}
+
+.profile-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.profile-content {
+  background-color: var(--secondary);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.stat-card {
+  background-color: var(--background);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.stat-card h3 {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.game-history table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.game-history th,
+.game-history td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.game-history th {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.game-win td {
+  color: var(--success);
+}
+
+.game-loss td {
+  color: var(--destructive);
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .achievements-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.achievement-card {
+  display: flex;
+  gap: 1rem;
+  background-color: var(--background);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.achievement-icon {
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.achievement-details h3 {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.achievement-date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+/* Styles for the posts tab */
+.tab-content h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Adjust SocialFeed styling for profile context */
+.tab-content .social-feed {
+  margin-top: 1rem;
+}
+
+.tab-content .create-post {
+  background-color: var(--background);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tab-content .post-item {
+  background-color: var(--background);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* Modern Twitter-style profile layout */
+.modern-profile-container {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Profile Sidebar */
+.profile-sidebar {
+  height: fit-content;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  padding: 1.5rem;
+  background-color: #1e2f4a;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.profile-avatar-container {
+  width: 100%;
+  height: 120px;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin: 0 auto 1.5rem;
+  background-color: #4ecdc4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: 600;
+  color: #1a2a44;
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4ecdc4;
+  color: #1a2a44;
+  font-size: 3rem;
+  font-weight: 600;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.profile-username {
+  font-size: 1rem;
+  color: #a3bffa;
+  margin-top: -0.5rem;
+}
+
+.profile-bio {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0.5rem 0;
+}
+
+.profile-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #a3bffa;
+}
+
+.profile-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.profile-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #a3bffa;
+}
+
+.edit-profile-button {
+  margin-top: 1rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: 1px solid #4ecdc4;
+  color: #4ecdc4;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.edit-profile-button:hover {
+  background-color: rgba(78, 205, 196, 0.1);
+}
+
+/* Content Area */
+.profile-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.profile-tabs {
+  display: flex;
+  border-bottom: 1px solid #2a3a54;
+  margin-bottom: 1rem;
+  position: sticky;
+  top: 0;
+  background-color: #1a2a44;
+  z-index: 5;
+  padding: 0.5rem 0;
+}
+
+.profile-tab {
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  color: #a3bffa;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.profile-tab:hover {
+  color: #f5f7fa;
+}
+
+.profile-tab.active {
+  color: #4ecdc4;
+}
+
+.profile-tab.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background-color: #4ecdc4;
+  border-radius: 4px 4px 0 0;
+}
+
+.profile-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.post-card {
+  background-color: #1e2f4a;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.post-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #4ecdc4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a2a44;
+}
+
+.post-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-user-info {
+  flex: 1;
+}
+
+.post-user-name {
+  font-weight: 600;
+}
+
+.post-user-handle {
+  font-size: 0.875rem;
+  color: #a3bffa;
+}
+
+.post-time {
+  font-size: 0.875rem;
+  color: #a3bffa;
+}
+
+.post-content {
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.post-content p {
+  margin-bottom: 1rem;
+}
+
+.post-image {
+  margin-top: 0.5rem;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.post-image img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+}
+
+.post-actions {
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid #2a3a54;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+.post-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #a3bffa;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.post-action:hover {
+  color: #4ecdc4;
+  background-color: rgba(78, 205, 196, 0.1);
+}
+
+/* Media Grid */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.media-item {
+  border-radius: 0.5rem;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.media-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Placeholder styles */
+.achievements-placeholder,
+.games-placeholder {
+  background-color: #1e2f4a;
+  border-radius: 1rem;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.achievements-placeholder h2,
+.games-placeholder h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #4ecdc4;
+}
+
+.achievements-placeholder p,
+.games-placeholder p {
+  color: #a3bffa;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modern-profile-container {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-sidebar {
+    position: static;
+    margin-bottom: 2rem;
+  }
+
+  .profile-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    padding-bottom: 0.5rem;
+  }
+
+  .profile-tab {
+    padding: 0.75rem 1rem;
+  }
+}

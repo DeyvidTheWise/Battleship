@@ -1,0 +1,43 @@
+.tabs {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+
+.tabs-list {
+  display: flex;
+  border-bottom: 1px solid #4a4a4a;
+ 
+}
+
+.tabs-trigger {
+  padding: 0.75rem 1rem;
+  background-color: transparent;
+  color: #a3bffa;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.2s, border-color 0.2s;
+  border-bottom: 2px solid transparent;
+ 
+}
+
+.tabs-trigger:hover {
+  color: #f5f7fa;
+}
+
+.tabs-trigger[data-state="active"] {
+  color: #4ecdc4;
+  border-bottom-color: #4ecdc4;
+ 
+}
+
+.tabs-content {
+  padding: 1rem 0;
+  margin-top: 0.5rem;
+}
+
+.tabs-content[data-state="inactive"] {
+  display: none;
+}
