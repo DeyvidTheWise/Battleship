@@ -1,0 +1,636 @@
+{
+	"info": {
+		"_postman_id": "d89b446f-0212-4572-b475-2de726cdbe73",
+		"name": "Battleship API Tests",
+		"description": "Test collection for Battleship game API endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "9736807"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": "http://localhost:3001/api/auth/register",
+						"description": "Register a new user"
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": "http://localhost:3001/api/auth/login",
+						"description": "Login with existing user credentials"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"url": "http://localhost:3001/api/auth/me",
+						"description": "Get current user information"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for user authentication"
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "Get User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"url": "http://localhost:3001/api/users/me",
+						"description": "Get current user profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ1NDAyMDE3LCJleHAiOjE3NDYwMDY4MTd9.w9Z9Aqx2CSbugJAP0T35yUzAqUTpJR_FbZli5ZfZd5Q"
+							}
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"updatedUsername\",\n    \"bio\": \"This is my updated bio\",\n    \"avatar\": \"avatar-url.jpg\"\n}"
+						},
+						"url": "http://localhost:3001/api/users/me",
+						"description": "Update current user profile"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ1NDAyMDE3LCJleHAiOjE3NDYwMDY4MTd9.w9Z9Aqx2CSbugJAP0T35yUzAqUTpJR_FbZli5ZfZd5Q"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{adminToken}}",
+								"description": "Admin JWT token"
+							}
+						],
+						"url": "http://localhost:3001/api/users",
+						"description": "Get all users (admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for user profile management"
+		},
+		{
+			"name": "Game",
+			"item": [
+				{
+					"name": "Get Leaderboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/games/leaderboard",
+						"description": "Get game leaderboard"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Game History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"url": "http://localhost:3001/api/games/history",
+						"description": "Get user's game history"
+					},
+					"response": []
+				},
+				{
+					"name": "Get AI Difficulty Levels",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/ai/difficulty-levels",
+						"description": "Get available AI difficulty levels"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for game-related functionality"
+		},
+		{
+			"name": "Social",
+			"item": [
+				{
+					"name": "Get All Posts",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/social/posts",
+						"description": "Get all social posts"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Post",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ1NDAyNzE2LCJleHAiOjE3NDYwMDc1MTZ9.CjyOhly3iBJ8LmGIpR9wpe-tG6tAAGGTCQzXPytz1Uk"
+							}
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"This is my first post!\",\n    \"imageUrl\": \"optional-image-url.jpg\"\n}"
+						},
+						"url": "http://localhost:3001/api/social/posts",
+						"description": "Create a new social post"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Friends List",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ1NDAyNzE2LCJleHAiOjE3NDYwMDc1MTZ9.CjyOhly3iBJ8LmGIpR9wpe-tG6tAAGGTCQzXPytz1Uk"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login",
+								"disabled": true
+							}
+						],
+						"url": "http://localhost:3001/api/social/friends",
+						"description": "Get user's friends list"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Friend Request",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"friendId\": 2\n}"
+						},
+						"url": "http://localhost:3001/api/social/friends/request",
+						"description": "Send a friend request to another user"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for social features"
+		},
+		{
+			"name": "Chat",
+			"item": [
+				{
+					"name": "Get Chat Messages",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ1NDAyNzE2LCJleHAiOjE3NDYwMDc1MTZ9.CjyOhly3iBJ8LmGIpR9wpe-tG6tAAGGTCQzXPytz1Uk"
+							}
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login",
+								"disabled": true
+							}
+						],
+						"url": "http://localhost:3001/api/chat/2",
+						"description": "Get chat messages with user ID 2"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"receiverId\": 2,\n    \"content\": \"Hello, how are you?\"\n}"
+						},
+						"url": "http://localhost:3001/api/chat",
+						"description": "Send a chat message to user ID 2"
+					},
+					"response": []
+				},
+				{
+					"name": "Mark Messages as Read",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": {
+								"token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ1NDAyNzE2LCJleHAiOjE3NDYwMDc1MTZ9.CjyOhly3iBJ8LmGIpR9wpe-tG6tAAGGTCQzXPytz1Uk"
+							}
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login",
+								"disabled": true
+							}
+						],
+						"url": "http://localhost:3001/api/chat/2/read",
+						"description": "Mark messages from user ID 2 as read"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for chat functionality"
+		},
+		{
+			"name": "CMS",
+			"item": [
+				{
+					"name": "Get News",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/cms/news",
+						"description": "Get all news articles"
+					},
+					"response": []
+				},
+				{
+					"name": "Create News (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{adminToken}}",
+								"description": "Admin JWT token"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"New Game Update\",\n    \"content\": \"We've added new features to the game!\",\n    \"imageUrl\": \"optional-image-url.jpg\"\n}"
+						},
+						"url": "http://localhost:3001/api/cms/news",
+						"description": "Create a new news article (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get FAQs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/cms/faqs",
+						"description": "Get all FAQs"
+					},
+					"response": []
+				},
+				{
+					"name": "Create FAQ (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{adminToken}}",
+								"description": "Admin JWT token"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"question\": \"How do I play the game?\",\n    \"answer\": \"Place your ships and try to sink your opponent's ships!\"\n}"
+						},
+						"url": "http://localhost:3001/api/cms/faqs",
+						"description": "Create a new FAQ (admin only)"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for content management"
+		},
+		{
+			"name": "Statistics",
+			"item": [
+				{
+					"name": "Get User Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/statistics/user/1",
+						"description": "Get statistics for user ID 1"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Statistics",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"wins\": 5,\n    \"losses\": 3,\n    \"totalShots\": 120,\n    \"hitsLanded\": 45\n}"
+						},
+						"url": "http://localhost:3001/api/statistics/user/1",
+						"description": "Update statistics for user ID 1"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for user statistics"
+		},
+		{
+			"name": "Achievements",
+			"item": [
+				{
+					"name": "Get All Achievements",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/achievements",
+						"description": "Get all available achievements"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Achievements",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/achievements/user/1",
+						"description": "Get achievements for user ID 1"
+					},
+					"response": []
+				},
+				{
+					"name": "Unlock Achievement",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"achievementId\": 1\n}"
+						},
+						"url": "http://localhost:3001/api/achievements/unlock",
+						"description": "Unlock achievement ID 1 for current user"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for user achievements"
+		},
+		{
+			"name": "Tournaments",
+			"item": [
+				{
+					"name": "Get All Tournaments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/tournaments",
+						"description": "Get all tournaments"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Tournament by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://localhost:3001/api/tournaments/1",
+						"description": "Get tournament with ID 1"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Tournament (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "x-auth-token",
+								"value": "{{adminToken}}",
+								"description": "Admin JWT token"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Summer Championship\",\n    \"description\": \"Summer tournament with prizes\",\n    \"startDate\": \"2023-07-01T00:00:00.000Z\",\n    \"endDate\": \"2023-07-15T00:00:00.000Z\",\n    \"maxParticipants\": 16,\n    \"prizes\": [\"1st Place: 1000 coins\", \"2nd Place: 500 coins\"]\n}"
+						},
+						"url": "http://localhost:3001/api/tournaments",
+						"description": "Create a new tournament (admin only)"
+					},
+					"response": []
+				},
+				{
+					"name": "Join Tournament",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"url": "http://localhost:3001/api/tournaments/1/join",
+						"description": "Join tournament with ID 1"
+					},
+					"response": []
+				},
+				{
+					"name": "Leave Tournament",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-auth-token",
+								"value": "{{authToken}}",
+								"description": "JWT token received from login"
+							}
+						],
+						"url": "http://localhost:3001/api/tournaments/1/leave",
+						"description": "Leave tournament with ID 1"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for tournament management"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "authToken",
+			"value": "YOUR_AUTH_TOKEN_HERE",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "YOUR_ADMIN_TOKEN_HERE",
+			"type": "string"
+		}
+	]
+}
