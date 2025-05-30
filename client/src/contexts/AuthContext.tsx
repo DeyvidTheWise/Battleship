@@ -76,6 +76,7 @@ interface AuthContextType {
   ) => Promise<{
     success: boolean
     message: string
+    field?: string
   }>
   logout: () => void
   updateUser: (user: User) => void
@@ -91,21 +92,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // Helper function to ensure role is of the correct type
   const ensureValidRole = (role: string): "user" | "admin" => {
     return role === "admin" ? "admin" : "user"
   }
 
+  // Login function
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true)
 
+      // Make a real API call to the backend
       const response = await apiClient.post<AuthResponse>("/api/auth/login", {
         email,
         password,
       })
 
+      // Extract user data and token from the response
       const { token, user: userData } = response
 
+      // Add stats if they don't exist in the API response and ensure role is valid
       const userWithStats: User = {
         ...userData,
         role: ensureValidRole(userData.role),
@@ -116,14 +122,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         },
       }
 
+      // Store token and user data in localStorage
       localStorage.setItem("token", token)
       localStorage.setItem("user", JSON.stringify(userWithStats))
 
+      // Update state
       setUser(userWithStats)
 
       return { success: true, message: "Login successful" }
     } catch (error: any) {
-      console.error("Login error:", error)
       const errorMessage =
         error.response?.data?.message ||
         (error instanceof Error
@@ -136,6 +143,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
+  // Register function
   const register = async (
     username: string,
     email: string,
@@ -144,6 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true)
 
+      // Make a real API call to the backend
       const response = await apiClient.post<AuthResponse>(
         "/api/auth/register",
         {
@@ -153,8 +162,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       )
 
+      // Extract user data and token from the response
       const { token, user: userData } = response
 
+      // Add stats if they don't exist in the API response and ensure role is valid
       const userWithStats: User = {
         ...userData,
         role: ensureValidRole(userData.role),
@@ -165,52 +176,77 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         },
       }
 
+      // Store token and user data in localStorage
       localStorage.setItem("token", token)
       localStorage.setItem("user", JSON.stringify(userWithStats))
 
+      // Update state
       setUser(userWithStats)
 
       return { success: true, message: "Registration successful" }
     } catch (error: any) {
-      console.error("Registration error:", error)
-      const errorMessage =
-        error.response?.data?.message ||
-        (error instanceof Error
-          ? error.message
-          : "An error occurred during registration")
+      // Handle API error responses with field-specific errors
+      if (error.response?.data) {
+        const errorData = error.response.data
 
+        // Extract the error message and field from the server response
+        const errorMessage =
+          errorData.message ||
+          errorData.error ||
+          "An error occurred during registration"
+        const field = errorData.field || undefined
+
+        return {
+          success: false,
+          message: errorMessage,
+          field: field,
+        }
+      }
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during registration"
       return { success: false, message: errorMessage }
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Logout function
   const logout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("user")
     setUser(null)
+    // Use window.location for navigation instead of useNavigate
     window.location.href = "/"
   }
 
+  // Update user function
   const updateUser = (updatedUser: User) => {
     localStorage.setItem("user", JSON.stringify(updatedUser))
     setUser(updatedUser)
   }
 
+  // Check if user is already logged in
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem("token")
         if (token) {
+          // Try to get stored user data
           const storedUser = localStorage.getItem("user")
 
           if (storedUser) {
             try {
+              // Parse stored user data
               const userData = JSON.parse(storedUser) as User
               setUser(userData)
 
+              // Optionally verify token with the server
               try {
                 const response = await apiClient.get<MeResponse>("/api/auth/me")
+                // If the server returns updated user data, use that
                 if (response.user) {
                   const updatedUser: User = {
                     ...response.user,
@@ -227,16 +263,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                   setUser(updatedUser)
                 }
               } catch (verifyError) {
-                console.error("Token verification error:", verifyError)
+                // If token verification fails, log the user out
+                localStorage.removeItem("token")
+                localStorage.removeItem("user")
+                setUser(null)
               }
-            } catch (parseError) {
-              console.error("Error parsing stored user:", parseError)
+            } catch (e) {
               localStorage.removeItem("user")
+            }
+          } else {
+            // If we have a token but no user data, try to get user data from the server
+            try {
+              const response = await apiClient.get<MeResponse>("/api/auth/me")
+              if (response.user) {
+                const userData: User = {
+                  ...response.user,
+                  role: ensureValidRole(response.user.role),
+                  stats: response.user.stats || {
+                    wins: 0,
+                    losses: 0,
+                    gamesPlayed: 0,
+                  },
+                }
+
+                localStorage.setItem("user", JSON.stringify(userData))
+                setUser(userData)
+              }
+            } catch (error) {
+              localStorage.removeItem("token")
             }
           }
         }
       } catch (error) {
-        console.error("Auth check error:", error)
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
       } finally {
         setIsLoading(false)
       }
@@ -245,10 +305,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth()
   }, [])
 
-  const value = {
+  // Compute derived state
+  const isAuthenticated = !!user
+  const isAdmin = user?.role === "admin"
+
+  const value: AuthContextType = {
     user,
-    isAuthenticated: !!user,
-    isAdmin: user?.role === "admin",
+    isAuthenticated,
+    isAdmin,
     isLoading,
     login,
     register,

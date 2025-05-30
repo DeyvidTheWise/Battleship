@@ -31,6 +31,7 @@ interface UsernameCheckResponse {
   message: string
 }
 
+// Debounce function to limit API calls
 const debounce = <F extends (...args: any[]) => any>(
   func: F,
   waitFor: number
@@ -69,6 +70,7 @@ const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
   const { showToast } = useToast()
 
+  // Debounced function to check username availability
   const checkUsernameAvailability = useCallback(
     debounce(async (username: string) => {
       if (!username || username.length < 3) {
@@ -82,14 +84,17 @@ const RegisterPage: React.FC = () => {
           `/api/auth/check-username?username=${encodeURIComponent(username)}`
         )
 
+        // Set the availability state based on the response
         setUsernameAvailable(response.available)
 
+        // Update the error state based on availability
         if (!response.available) {
           setErrors((prev) => ({
             ...prev,
             username: "Username is already taken",
           }))
         } else {
+          // Only clear the username error if it was "already taken"
           setErrors((prev) => {
             if (prev.username === "Username is already taken") {
               return { ...prev, username: undefined }
@@ -98,7 +103,6 @@ const RegisterPage: React.FC = () => {
           })
         }
       } catch (error) {
-        console.error("Error checking username:", error)
         setUsernameAvailable(null)
       } finally {
         setIsCheckingUsername(false)
@@ -107,14 +111,18 @@ const RegisterPage: React.FC = () => {
     []
   )
 
+  // For username validation and availability check
   useEffect(() => {
     if (username === "") {
+      // Don't show error for empty field initially
       if (errors.username)
         setErrors((prev) => ({ ...prev, username: undefined }))
       setUsernameAvailable(null)
       return
     }
 
+    // Only show length validation errors when we have at least one character
+    // but don't show "too short" errors while the user is still typing
     if (username.length > 20) {
       setErrors((prev) => ({
         ...prev,
@@ -122,18 +130,23 @@ const RegisterPage: React.FC = () => {
       }))
       setUsernameAvailable(null)
     } else if (username.length >= 3) {
+      // Clear any previous length errors
       if (errors.username && errors.username.includes("characters")) {
         setErrors((prev) => ({ ...prev, username: undefined }))
       }
-
+      // Only check availability if basic validation passes
       checkUsernameAvailability(username)
     } else {
+      // For usernames shorter than 3 chars, just clear availability
       setUsernameAvailable(null)
+      // Don't show the "too short" error while typing - we'll validate on submit
     }
   }, [username, errors.username, checkUsernameAvailability])
 
+  // For email validation
   useEffect(() => {
     if (email === "") {
+      // Don't show error for empty field initially
       if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }))
       return
     }
@@ -149,8 +162,10 @@ const RegisterPage: React.FC = () => {
     }
   }, [email, errors.email])
 
+  // For password validation
   useEffect(() => {
     if (password === "") {
+      // Don't show error for empty field initially
       if (errors.password)
         setErrors((prev) => ({ ...prev, password: undefined }))
       return
@@ -166,8 +181,10 @@ const RegisterPage: React.FC = () => {
     }
   }, [password, errors.password])
 
+  // For confirmPassword validation
   useEffect(() => {
     if (confirmPassword === "") {
+      // Don't show error for empty field initially
       if (errors.confirmPassword)
         setErrors((prev) => ({ ...prev, confirmPassword: undefined }))
       return
@@ -187,6 +204,7 @@ const RegisterPage: React.FC = () => {
     const newErrors: typeof errors = {}
     let isValid = true
 
+    // Validate username
     if (!username.trim()) {
       newErrors.username = "Username is required"
       isValid = false
@@ -201,6 +219,7 @@ const RegisterPage: React.FC = () => {
       isValid = false
     }
 
+    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!email.trim()) {
       newErrors.email = "Email is required"
@@ -210,6 +229,7 @@ const RegisterPage: React.FC = () => {
       isValid = false
     }
 
+    // Validate password
     if (!password) {
       newErrors.password = "Password is required"
       isValid = false
@@ -218,6 +238,7 @@ const RegisterPage: React.FC = () => {
       isValid = false
     }
 
+    // Validate password confirmation
     if (password !== confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match"
       isValid = false
@@ -230,8 +251,10 @@ const RegisterPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // Clear any previous errors
     setErrors({})
 
+    // Validate form
     if (!validateForm()) {
       return
     }
@@ -239,19 +262,10 @@ const RegisterPage: React.FC = () => {
     setIsLoading(true)
 
     try {
-      const response = await apiClient.post<RegisterResponse>(
-        "/api/auth/register",
-        {
-          username,
-          email,
-          password,
-        }
-      )
+      // Use the auth context register function instead of calling API directly
+      const result = await register(username, email, password)
 
-      if (response && response.token && response.user) {
-        localStorage.setItem("token", response.token)
-
-        await register(username, email, password)
+      if (result.success) {
         showToast({
           title: "Registration successful",
           description: "Welcome to Battleship Online!",
@@ -259,48 +273,19 @@ const RegisterPage: React.FC = () => {
         })
         navigate("/")
       } else {
-        throw new Error("Invalid response from server")
+        // Always show server errors as general errors for better visibility
+        setErrors((prev) => ({
+          ...prev,
+          general: result.message,
+        }))
+
+        showToast({
+          title: "Registration failed",
+          description: result.message,
+          variant: "destructive",
+        })
       }
     } catch (error) {
-      console.error("Registration error:", error)
-
-      if (error && typeof error === "object" && "response" in error) {
-        const errorResponse = (error as any).response
-        const errorData = errorResponse?.data as ErrorResponse | undefined
-
-        if (errorData) {
-          console.log("Server error response:", errorData)
-
-          if (errorData.field) {
-            const fieldName = errorData.field as keyof typeof errors
-            setErrors((prev) => ({
-              ...prev,
-              [fieldName]: errorData.message,
-            }))
-
-            showToast({
-              title: "Registration failed",
-              description: `${
-                fieldName.charAt(0).toUpperCase() + fieldName.slice(1)
-              }: ${errorData.message}`,
-              variant: "destructive",
-            })
-          } else {
-            setErrors((prev) => ({
-              ...prev,
-              general: errorData.message,
-            }))
-
-            showToast({
-              title: "Registration failed",
-              description: errorData.message,
-              variant: "destructive",
-            })
-          }
-          return
-        }
-      }
-
       const errorMessage =
         error instanceof Error
           ? error.message
@@ -355,6 +340,7 @@ const RegisterPage: React.FC = () => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     onBlur={() => {
+                      // Show validation error on blur if username is too short
                       if (username && username.length < 3) {
                         setErrors((prev) => ({
                           ...prev,
